@@ -327,11 +327,11 @@
     <!-- ── Formulário de envio ── -->
     <div id="form-section">
 
-      <p class="section-label">1. Parampack</p>
+      <p class="section-label">1. Configurações da Grade</p>
       <div class="upload-area" id="upload-area">
         <input type="file" accept=".json" id="file-input" onchange="handleFile(this.files[0])" />
         <div class="upload-icon">📦</div>
-        <h3>Arraste o parampack.json aqui</h3>
+        <h3>Arraste seu arquivo de configurações da Grade (formato .json) aqui</h3>
         <p>ou clique para selecionar</p>
         <span class="ext-tag">JSON — gerado pelo wizard de parâmetros</span>
       </div>
@@ -377,7 +377,7 @@
       <div class="status-steps">
         <div class="status-step">
           <div class="step-dot done">✓</div>
-          Parampack recebido pelo servidor
+          Configs Grade recebido pelo servidor
         </div>
         <div class="status-step">
           <div class="step-dot spin">▶</div>
@@ -449,7 +449,7 @@ function handleFile(file) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed.groups || !parsed.teachers || !parsed.courses) {
-        showError('JSON inválido — não parece um parampack. Verifique o arquivo.');
+        showError('JSON inválido — não parece um config_grade. Verifique o arquivo.');
         return;
       }
       currentFile   = file;

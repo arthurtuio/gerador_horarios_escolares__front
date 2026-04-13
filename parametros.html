@@ -549,7 +549,7 @@
       <div id="validation-1" class="validation-banner"></div>
 
       <div class="form-group">
-        <label class="form-label" for="meta-name">Nome do parampack</label>
+        <label class="form-label" for="meta-name">Nome da grade de horários</label>
         <input type="text" id="meta-name" class="text-input" style="max-width:380px"
                placeholder="ex: jan26_matutino" oninput="saveState()" />
         <p class="form-hint">Usado como nome do arquivo JSON exportado.</p>
@@ -771,7 +771,7 @@
   <!-- ── ETAPA 8: Exportar ── -->
   <div id="page-8" class="page">
     <div class="topbar">
-      <h1>⬇️ Exportar Parampack</h1>
+      <h1>⬇️ Exportar Configurações da Grade</h1>
       <span class="topbar-sub">Etapa 8 de 8</span>
     </div>
     <div class="content">
@@ -785,11 +785,11 @@
         <div class="form-group">
           <label class="form-label">Nome do arquivo</label>
           <div class="export-filename-row">
-            <input type="text" id="export-name" class="text-input" placeholder="parampack" />
+            <input type="text" id="export-name" class="text-input" placeholder="config_grade" />
             <span class="filename-ext">.json</span>
           </div>
         </div>
-        <button class="btn-export" onclick="exportJSON()">⬇ Baixar parampack.json</button>
+        <button class="btn-export" onclick="exportJSON()">⬇ Baixar config_grade.json</button>
         <div id="export-success" class="success-banner">✅ Arquivo baixado!</div>
       </div>
     </div>
@@ -822,7 +822,7 @@ const DAYS_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
 const MANHA_TIMES  = ['7h30–8h20',  '8h20–9h10',  '9h10–10h00', '10h00–10h50', '10h50–11h40', '11h40–12h30'];
 const TARDE_TIMES  = ['13h30–14h25','14h25–15h20','15h20–16h15','16h15–17h10', '17h10–18h05', '18h05–19h00'];
 
-const STORAGE_KEY = 'parampack_wizard_v1';
+const STORAGE_KEY = 'config_grade_wizard_v1';
 
 // ══════════════════════════════════════════
 // State
@@ -995,7 +995,7 @@ function validateStep(step) {
   showValidation(step, '');
   if (step === 1) {
     if (!state.meta.name) {
-      showValidation(1, 'Informe um nome para o parampack antes de continuar.');
+      showValidation(1, 'Informe um nome para a config_grade antes de continuar.');
       return false;
     }
   }
@@ -1433,7 +1433,7 @@ function buildParampack() {
 
   return {
     meta: {
-      name        : meta.name || 'parampack',
+      name        : meta.name || 'config_grade',
       generated_at: new Date().toISOString(),
       version     : 1,
     },
@@ -1450,7 +1450,7 @@ function buildParampack() {
 
 function exportJSON() {
   const nameEl   = document.getElementById('export-name');
-  const filename = (nameEl?.value?.trim() || state.meta.name || 'parampack') + '.json';
+  const filename = (nameEl?.value?.trim() || state.meta.name || 'config_grade') + '.json';
 
   const pack = buildParampack();
   const json = JSON.stringify(pack, null, 2);
@@ -1531,7 +1531,7 @@ function runFeasibilityCheck() {
   const banner = document.getElementById('feasibility-banner');
   banner.innerHTML = anyFail
     ? '<div class="feas-banner-fail">❌ Existem conflitos de disponibilidade. Corrija antes de exportar!</div>'
-    : '<div class="feas-banner-ok">🎉 Todas as demandas são atendidas pela disponibilidade! O parampack é viável.</div>';
+    : '<div class="feas-banner-ok">🎉 Todas as demandas são atendidas pela disponibilidade! A grade é viável.</div>';
 
   // Table 1
   const t1 = document.getElementById('feasibility-table-1');
