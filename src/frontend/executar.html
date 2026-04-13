@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Executar GA — Horários Escolares</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: #1e2a4a;
+      color: #c8d6f0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid #2e3f6a;
+    }
+    .sidebar-logo h2 { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3; }
+    .sidebar-logo span { font-size: 11px; color: #7a90b8; display: block; margin-top: 2px; }
+
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 20px;
+      cursor: pointer;
+      font-size: 13.5px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease;
+      color: #a0b4d0;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: #26375e; color: #fff; }
+    .nav-item.active { background: #1a6fc4; border-left-color: #5cb8ff; color: #fff; font-weight: 600; }
+    .nav-icon { font-size: 16px; }
+
+    .sidebar-footer {
+      padding: 14px 20px;
+      border-top: 1px solid #2e3f6a;
+      font-size: 11px;
+      color: #4e6a96;
+    }
+
+    /* ── Main ── */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #dde3ed;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar h1 { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+
+    .content { padding: 28px 32px; flex: 1; max-width: 680px; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: #8898b0;
+      margin: 28px 0 10px;
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* ── Upload area ── */
+    .upload-area {
+      border: 2px dashed #9ab3d0;
+      border-radius: 12px;
+      padding: 40px 32px;
+      text-align: center;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .upload-area:hover, .upload-area.drag-over {
+      border-color: #1a6fc4;
+      background: #f0f6ff;
+    }
+    .upload-area input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+    }
+    .upload-icon { font-size: 42px; margin-bottom: 10px; }
+    .upload-area h3 { font-size: 15px; font-weight: 600; color: #1a1a2e; margin-bottom: 5px; }
+    .upload-area p { font-size: 12px; color: #6b7a99; }
+    .ext-tag {
+      display: inline-block;
+      margin-top: 10px;
+      background: #e8f0fe;
+      color: #1a6fc4;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── File loaded banner ── */
+    .file-banner {
+      background: #e8f5e9;
+      border: 1px solid #81c784;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #2e7d32;
+      margin-top: 12px;
+    }
+    .file-banner .file-info { flex: 1; }
+    .file-banner .file-name { font-weight: 700; }
+    .file-banner .file-meta { font-size: 11px; color: #4a8a55; margin-top: 2px; }
+    .btn-clear {
+      background: none; border: none;
+      color: #4a8a55; font-size: 18px;
+      cursor: pointer; padding: 2px 6px;
+      border-radius: 6px;
+      transition: all 0.12s;
+    }
+    .btn-clear:hover { background: rgba(192,57,43,0.1); color: #c0392b; }
+
+    /* ── Parampack preview ── */
+    .preview-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .preview-chip {
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #4a5568;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .preview-chip strong { color: #1a1a2e; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-size: 13px; font-weight: 600;
+      color: #3a4a62;
+      margin-bottom: 6px;
+    }
+    .form-hint { font-size: 11px; color: #8898b0; margin-top: 5px; }
+
+    .text-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #c8d6eb;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1a1a2e;
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+    .text-input:focus { outline: none; border-color: #1a6fc4; }
+
+    /* ── Error banner ── */
+    .error-banner {
+      background: #ffebee;
+      border: 1px solid #ef9a9a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #c62828;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .error-banner.show { display: block; }
+
+    /* ── Submit button ── */
+    .btn-execute {
+      width: 100%;
+      background: #27ae60;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 16px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .btn-execute:hover:not(:disabled) { background: #219a52; }
+    .btn-execute:disabled { background: #a8d5b8; cursor: not-allowed; }
+
+    /* ── Status card ── */
+    .status-card {
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 12px;
+      padding: 28px 24px;
+      text-align: center;
+      display: none;
+    }
+    .status-card.show { display: block; }
+    .status-icon { font-size: 52px; margin-bottom: 12px; }
+    .status-title { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+    .status-sub { font-size: 13px; color: #6b7a99; line-height: 1.6; }
+    .status-email { font-weight: 700; color: #1a6fc4; }
+
+    .status-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 20px auto;
+      max-width: 340px;
+      text-align: left;
+    }
+    .status-step {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: #4a5568;
+    }
+    .status-step .step-dot {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 12px; font-weight: 700;
+    }
+    .step-dot.done  { background: #27ae60; color: #fff; }
+    .step-dot.wait  { background: #e8edf5; color: #8898b0; }
+    .step-dot.spin  { background: #1a6fc4; color: #fff; animation: pulse 1.4s ease-in-out infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    .btn-new-job {
+      margin-top: 20px;
+      background: #fff;
+      color: #1a6fc4;
+      border: 1.5px solid #c8d6eb;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-new-job:hover { border-color: #1a6fc4; background: #f0f6ff; }
+
+    /* ── Config notice ── */
+    .config-notice {
+      background: #fffde7;
+      border: 1px solid #f9ca24;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #7a6000;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .config-notice.show { display: block; }
+    .config-notice strong { color: #5a4500; }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <h2>🏫 Horários Escolares</h2>
+    <span>Gerador automático</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="parametros.html">
+      <span class="nav-icon">⚙️</span> Criar parâmetros
+    </a>
+    <a class="nav-item active" href="executar.html">
+      <span class="nav-icon">🚀</span> Executar GA
+    </a>
+    <a class="nav-item" href="index.html">
+      <span class="nav-icon">📊</span> Ver grade gerada
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    Algoritmo Genético<br>para geração de horários
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main id="main">
+  <div class="topbar">
+    <h1>🚀 Executar Algoritmo Genético</h1>
+  </div>
+
+  <div class="content">
+
+    <div id="config-notice" class="config-notice">
+      ⚠️ <strong>Endpoint não configurado.</strong>
+      Edite a variável <code>GA_ENDPOINT</code> no início do script com a URL do Modal.
+    </div>
+
+    <!-- ── Formulário de envio ── -->
+    <div id="form-section">
+
+      <p class="section-label">1. Parampack</p>
+      <div class="upload-area" id="upload-area">
+        <input type="file" accept=".json" id="file-input" onchange="handleFile(this.files[0])" />
+        <div class="upload-icon">📦</div>
+        <h3>Arraste o parampack.json aqui</h3>
+        <p>ou clique para selecionar</p>
+        <span class="ext-tag">JSON — gerado pelo wizard de parâmetros</span>
+      </div>
+      <div id="file-banner" style="display:none" class="file-banner">
+        <span>✅</span>
+        <div class="file-info">
+          <div class="file-name" id="file-name"></div>
+          <div class="file-meta" id="file-meta"></div>
+        </div>
+        <button class="btn-clear" onclick="clearFile()" title="Remover arquivo">×</button>
+      </div>
+      <div id="preview-grid" class="preview-grid"></div>
+
+      <p class="section-label" style="margin-top:24px">2. Email para receber o resultado</p>
+      <div class="form-group">
+        <input type="email" id="email-input" class="text-input"
+               placeholder="seu@email.com"
+               style="max-width:380px" />
+        <p class="form-hint">Você receberá o CSV gerado pelo GA como anexo neste email.</p>
+      </div>
+
+      <div id="error-banner" class="error-banner"></div>
+
+      <p class="section-label">3. Executar</p>
+      <button class="btn-execute" id="btn-execute" onclick="submitJob()" disabled>
+        <span>🚀</span> Enviar para processamento
+      </button>
+      <p class="form-hint" style="margin-top:10px;text-align:center">
+        O algoritmo pode levar mais de 10 minutos. Você será avisado por email ao terminar.
+      </p>
+
+    </div>
+
+    <!-- ── Status pós-envio ── -->
+    <div id="status-card" class="status-card">
+      <div class="status-icon">⏳</div>
+      <div class="status-title">Job enviado com sucesso!</div>
+      <div class="status-sub">
+        O algoritmo genético está rodando.<br>
+        Você receberá o CSV no email <span class="status-email" id="status-email"></span>
+      </div>
+
+      <div class="status-steps">
+        <div class="status-step">
+          <div class="step-dot done">✓</div>
+          Parampack recebido pelo servidor
+        </div>
+        <div class="status-step">
+          <div class="step-dot spin">▶</div>
+          Executando algoritmo genético…
+        </div>
+        <div class="status-step">
+          <div class="step-dot wait">3</div>
+          Enviando CSV por email
+        </div>
+      </div>
+
+      <div class="status-sub" style="margin-top:4px">
+        Quando terminar, abra o CSV recebido no<br>
+        <a href="index.html" style="color:#1a6fc4;font-weight:600">visualizador de grades →</a>
+      </div>
+
+      <button class="btn-new-job" onclick="resetForm()">+ Enviar outro job</button>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ══════════════════════════════════════════
+// Config — preencha com a URL do Modal após deploy
+// ══════════════════════════════════════════
+const GA_ENDPOINT = '';   // ex: 'https://arthur-antonia--gerador-horarios-run-ga.modal.run'
+
+// ══════════════════════════════════════════
+// State
+// ══════════════════════════════════════════
+let currentFile   = null;
+let currentParsed = null;
+
+// ══════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════
+(function init() {
+  if (!GA_ENDPOINT) {
+    document.getElementById('config-notice').classList.add('show');
+  }
+
+  // Drag & drop
+  const area = document.getElementById('upload-area');
+  area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+  area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+  area.addEventListener('drop', e => {
+    e.preventDefault();
+    area.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  // Enable button when both file + email are set
+  document.getElementById('email-input').addEventListener('input', updateSubmitState);
+})();
+
+// ══════════════════════════════════════════
+// File handling
+// ══════════════════════════════════════════
+function handleFile(file) {
+  if (!file || !file.name.endsWith('.json')) {
+    showError('Selecione um arquivo .json (gerado pelo wizard de parâmetros).');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.groups || !parsed.teachers || !parsed.courses) {
+        showError('JSON inválido — não parece um parampack. Verifique o arquivo.');
+        return;
+      }
+      currentFile   = file;
+      currentParsed = parsed;
+      hideError();
+      showFileBanner(file, parsed);
+      updateSubmitState();
+    } catch (_) {
+      showError('Erro ao ler o arquivo JSON. Verifique se o arquivo não está corrompido.');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function showFileBanner(file, parsed) {
+  document.getElementById('upload-area').style.display = 'none';
+  const banner = document.getElementById('file-banner');
+  banner.style.display = 'flex';
+
+  document.getElementById('file-name').textContent = file.name;
+
+  const totalSessions = (parsed.group_course_requirements || [])
+    .reduce((s, r) => s + (r.weekly_qty || 0), 0);
+  document.getElementById('file-meta').textContent =
+    `${(file.size / 1024).toFixed(1)} KB · gerado em ${parsed.meta?.generated_at
+      ? new Date(parsed.meta.generated_at).toLocaleString('pt-BR')
+      : '—'}`;
+
+  // Preview chips
+  const chips = [
+    { label: 'Turmas',      val: (parsed.groups   || []).length },
+    { label: 'Professores', val: (parsed.teachers  || []).length },
+    { label: 'Disciplinas', val: (parsed.courses   || []).length },
+    { label: 'Aulas/sem',   val: totalSessions                  },
+  ];
+  document.getElementById('preview-grid').innerHTML = chips
+    .map(c => `<div class="preview-chip">${c.label}: <strong>${c.val}</strong></div>`)
+    .join('');
+}
+
+function clearFile() {
+  currentFile   = null;
+  currentParsed = null;
+  document.getElementById('upload-area').style.display = '';
+  document.getElementById('file-banner').style.display = 'none';
+  document.getElementById('preview-grid').innerHTML = '';
+  document.getElementById('file-input').value = '';
+  updateSubmitState();
+}
+
+// ══════════════════════════════════════════
+// Submit
+// ══════════════════════════════════════════
+function updateSubmitState() {
+  const email = document.getElementById('email-input').value.trim();
+  const valid = currentFile !== null && isValidEmail(email);
+  document.getElementById('btn-execute').disabled = !valid;
+}
+
+async function submitJob() {
+  const email = document.getElementById('email-input').value.trim();
+
+  if (!currentParsed || !isValidEmail(email)) {
+    showError('Preencha todos os campos antes de enviar.');
+    return;
+  }
+
+  if (!GA_ENDPOINT) {
+    showError('Endpoint não configurado. Preencha GA_ENDPOINT no código.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-execute');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="animation:pulse 1s infinite">⏳</span> Enviando…';
+
+  try {
+    const payload = { parampack: currentParsed, email };
+    const res = await fetch(GA_ENDPOINT, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Servidor retornou ${res.status}: ${text}`);
+    }
+
+    showStatusCard(email);
+  } catch (err) {
+    showError(`Erro ao enviar: ${err.message}`);
+    btn.disabled = false;
+    btn.innerHTML = '<span>🚀</span> Enviar para processamento';
+  }
+}
+
+function showStatusCard(email) {
+  document.getElementById('form-section').style.display = 'none';
+  const card = document.getElementById('status-card');
+  card.classList.add('show');
+  document.getElementById('status-email').textContent = email;
+}
+
+function resetForm() {
+  currentFile   = null;
+  currentParsed = null;
+  document.getElementById('form-section').style.display = '';
+  document.getElementById('status-card').classList.remove('show');
+  document.getElementById('upload-area').style.display = '';
+  document.getElementById('file-banner').style.display = 'none';
+  document.getElementById('preview-grid').innerHTML = '';
+  document.getElementById('file-input').value = '';
+  document.getElementById('email-input').value = '';
+  document.getElementById('btn-execute').disabled = true;
+  document.getElementById('btn-execute').innerHTML = '<span>🚀</span> Enviar para processamento';
+  hideError();
+}
+
+// ══════════════════════════════════════════
+// Utils
+// ══════════════════════════════════════════
+function isValidEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = '⚠️ ' + msg;
+  el.classList.add('show');
+}
+
+function hideError() {
+  document.getElementById('error-banner').classList.remove('show');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criar Parâmetros — Horários Escolares</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: #1e2a4a;
+      color: #c8d6f0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid #2e3f6a;
+    }
+    .sidebar-logo h2 { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3; }
+    .sidebar-logo span { font-size: 11px; color: #7a90b8; display: block; margin-top: 2px; }
+
+    .sidebar-nav { padding: 16px 0; flex: 1; overflow-y: auto; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease;
+      color: #a0b4d0;
+      user-select: none;
+    }
+    .nav-item:hover:not(.disabled) { background: #26375e; color: #fff; }
+    .nav-item.active { background: #1a6fc4; border-left-color: #5cb8ff; color: #fff; font-weight: 600; }
+    .nav-item.disabled { opacity: 0.32; cursor: not-allowed; }
+    .nav-item.completed { color: #7ce8a0; }
+    .nav-item.completed:hover { background: #26375e; color: #a8f0c0; }
+
+    .nav-step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.1);
+    }
+    .nav-item.active .nav-step-num { background: rgba(255,255,255,0.25); }
+    .nav-item.completed .nav-step-num { background: #27ae60; color: #fff; }
+
+    .sidebar-footer {
+      padding: 14px 20px;
+      border-top: 1px solid #2e3f6a;
+    }
+    .btn-reset {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      color: #7a90b8;
+      border: 1px solid #2e3f6a;
+      border-radius: 7px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-reset:hover { background: #2e3f6a; color: #fff; }
+
+    /* ── Main ── */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #dde3ed;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar h1 { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+    .topbar-sub { font-size: 12px; color: #8898b0; margin-left: auto; white-space: nowrap; }
+
+    .content { padding: 28px 32px; flex: 1; }
+
+    /* ── Progress steps ── */
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      margin-bottom: 32px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .ps-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #b0bcc8;
+      flex-shrink: 0;
+    }
+    .ps-item.active { color: #1a6fc4; font-weight: 700; }
+    .ps-item.done { color: #27ae60; }
+    .ps-circle {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      border: 2px solid #c8d6eb;
+      color: #8898b0;
+      flex-shrink: 0;
+      background: #fff;
+    }
+    .ps-item.active .ps-circle { border-color: #1a6fc4; background: #1a6fc4; color: #fff; }
+    .ps-item.done .ps-circle { border-color: #27ae60; background: #27ae60; color: #fff; }
+    .ps-label { white-space: nowrap; }
+    .ps-line {
+      width: 28px;
+      height: 2px;
+      background: #c8d6eb;
+      flex-shrink: 0;
+      margin: 0 2px;
+    }
+    .ps-line.done { background: #27ae60; }
+
+    /* ── Pages ── */
+    .page { display: none; }
+    .page.active { display: flex; flex-direction: column; min-height: 100%; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: #8898b0;
+      margin: 24px 0 10px;
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* ── Form elements ── */
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-size: 13px; font-weight: 600;
+      color: #3a4a62;
+      margin-bottom: 6px;
+    }
+    .form-hint { font-size: 11px; color: #8898b0; margin-top: 5px; }
+
+    .text-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #c8d6eb;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1a1a2e;
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+    .text-input:focus { outline: none; border-color: #1a6fc4; }
+
+    .styled-select {
+      appearance: none;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a99' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+      border: 1.5px solid #c8d6eb;
+      border-radius: 8px;
+      padding: 10px 36px 10px 14px;
+      font-size: 14px;
+      color: #1a1a2e;
+      cursor: pointer;
+    }
+    .styled-select:focus { outline: none; border-color: #1a6fc4; }
+
+    .radio-group { display: flex; gap: 20px; flex-wrap: wrap; }
+    .radio-opt {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; cursor: pointer; color: #3a4a62;
+    }
+    .radio-opt input { accent-color: #1a6fc4; cursor: pointer; }
+
+    /* ── Chip input ── */
+    .chip-input-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 12px;
+    }
+    .chip-input-row .text-input { flex: 1; max-width: 280px; }
+
+    .chip-list {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      min-height: 38px;
+      padding: 4px 0;
+    }
+    .chip {
+      display: flex; align-items: center; gap: 5px;
+      background: #e8f0fe;
+      color: #1a4a8a;
+      border-radius: 20px;
+      padding: 5px 10px 5px 14px;
+      font-size: 13px; font-weight: 600;
+    }
+    .chip-remove {
+      background: none; border: none;
+      color: #6a8ac4; font-size: 17px; line-height: 1;
+      cursor: pointer; padding: 0 2px;
+      display: flex; align-items: center;
+      border-radius: 50%;
+      transition: all 0.12s;
+    }
+    .chip-remove:hover { color: #c0392b; background: rgba(192,57,43,0.1); }
+
+    .chip-empty { font-size: 13px; color: #a0b0c8; padding: 8px 0; }
+
+    /* ── Error / validation ── */
+    .error-msg {
+      color: #c62828; font-size: 12px;
+      margin-top: 5px; display: none;
+    }
+    .error-msg.show { display: block; }
+
+    .validation-banner {
+      background: #ffebee;
+      border: 1px solid #ef9a9a;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: #c62828;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .validation-banner.show { display: block; }
+
+    /* ── Course cards (step 4) ── */
+    .course-card {
+      display: flex; align-items: center; gap: 10px;
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .course-card .text-input { flex: 1; min-width: 140px; max-width: none; }
+    .course-card .styled-select { flex: 1; min-width: 160px; }
+    .btn-icon {
+      background: none; border: none;
+      color: #a0b0c8; font-size: 20px;
+      cursor: pointer; padding: 4px 6px;
+      border-radius: 6px;
+      transition: all 0.15s;
+      flex-shrink: 0; line-height: 1;
+    }
+    .btn-icon:hover { background: #fef2f2; color: #c0392b; }
+
+    /* ── Availability grid (step 5) ── */
+    .avail-controls {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .avail-grid-wrapper {
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 10px;
+      overflow: auto;
+    }
+    table.avail-grid { border-collapse: collapse; font-size: 13px; }
+    .avail-grid th {
+      background: #1e2a4a; color: #e8f0ff;
+      padding: 10px 18px;
+      font-size: 12px; font-weight: 600;
+      text-align: center; white-space: nowrap;
+    }
+    .avail-grid th:first-child { background: #161e38; text-align: left; min-width: 130px; }
+    .avail-grid td {
+      padding: 0; border: 1px solid #edf0f5;
+      text-align: center; min-width: 100px;
+    }
+    .avail-grid td:first-child {
+      padding: 0 14px;
+      background: #f5f8fd !important;
+      font-weight: 600; font-size: 12px; color: #4a5568;
+      text-align: left; white-space: nowrap;
+      border-right: 2px solid #dde3ed;
+    }
+    .avail-cell {
+      width: 100%; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: background 0.1s;
+      user-select: none;
+    }
+    .avail-cell.available { background: #e8f5e9; color: #2e7d32; }
+    .avail-cell.available:hover { background: #c8e6c9; }
+    .avail-cell.unavailable { background: #f5f6f8; color: #b8c4d0; }
+    .avail-cell.unavailable:hover { background: #ebedf2; }
+
+    .avail-summary { font-size: 12px; color: #6b7a99; margin-top: 10px; }
+
+    .copy-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: #f5f8fd;
+      border-radius: 8px;
+      border: 1px solid #dde3ed;
+    }
+    .copy-row span { font-size: 12px; color: #6b7a99; white-space: nowrap; }
+
+    /* ── Weekly qty table (step 6) ── */
+    .qty-table-wrapper {
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 10px;
+      overflow: auto;
+      max-height: 520px;
+    }
+    table.qty-table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+    .qty-table thead th {
+      background: #1e2a4a; color: #e8f0ff;
+      padding: 10px 12px;
+      font-size: 12px; font-weight: 600;
+      text-align: center; white-space: nowrap;
+      position: sticky; top: 0; z-index: 2;
+    }
+    .qty-table thead th:first-child {
+      background: #161e38; text-align: left;
+      min-width: 170px;
+      position: sticky; top: 0; left: 0; z-index: 3;
+    }
+    .qty-table tbody td {
+      border-bottom: 1px solid #edf0f5;
+      border-right: 1px solid #edf0f5;
+      text-align: center; padding: 0; min-width: 72px;
+    }
+    .qty-table tbody td:first-child {
+      background: #f5f8fd;
+      padding: 0 14px;
+      font-size: 12px; font-weight: 600; color: #3a4a62;
+      text-align: left; white-space: nowrap;
+      position: sticky; left: 0; z-index: 1;
+      border-right: 2px solid #dde3ed;
+    }
+    .qty-table tfoot td {
+      background: #eef1f7;
+      padding: 8px 10px;
+      font-size: 11px; font-weight: 700; color: #4a5568;
+      text-align: center;
+      border-top: 2px solid #c8d6eb;
+      position: sticky; bottom: 0; z-index: 2;
+    }
+    .qty-table tfoot td:first-child {
+      text-align: left;
+      position: sticky; left: 0; bottom: 0; z-index: 3;
+    }
+    .qty-input {
+      width: 100%; height: 44px;
+      border: none; text-align: center;
+      font-size: 14px; font-weight: 600;
+      background: transparent; color: #1a1a2e;
+      padding: 0 6px; cursor: pointer;
+    }
+    .qty-input:focus { outline: none; background: #e8f0fe; cursor: text; }
+    .qty-input.zero { color: #d0dae8; }
+    .qty-input::-webkit-inner-spin-button,
+    .qty-input::-webkit-outer-spin-button { opacity: 1; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: #1a6fc4; color: #fff;
+      border: none; border-radius: 8px;
+      padding: 11px 24px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { background: #155fa0; }
+
+    .btn-secondary {
+      background: #fff; color: #3a4a62;
+      border: 1.5px solid #c8d6eb;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-secondary:hover { border-color: #1a6fc4; color: #1a6fc4; }
+
+    .btn-small { padding: 7px 14px !important; font-size: 12px !important; }
+
+    .btn-add {
+      background: #1a6fc4; color: #fff;
+      border: none; border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn-add:hover { background: #155fa0; }
+
+    /* ── Step footer ── */
+    .step-footer {
+      display: flex; align-items: center; gap: 12px;
+      padding: 18px 32px;
+      background: #fff;
+      border-top: 1px solid #dde3ed;
+      margin-top: auto;
+    }
+    .spacer { flex: 1; }
+
+    /* ── Summary / Export (step 7) ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .summary-card {
+      background: #fff; border: 1px solid #dde3ed;
+      border-radius: 10px; padding: 18px;
+      text-align: center;
+    }
+    .summary-num {
+      font-size: 36px; font-weight: 800;
+      color: #1a6fc4; line-height: 1;
+      margin-bottom: 6px;
+    }
+    .summary-label { font-size: 12px; color: #6b7a99; font-weight: 500; }
+
+    .export-card {
+      background: #fff; border: 1px solid #dde3ed;
+      border-radius: 10px; padding: 24px;
+      max-width: 460px;
+    }
+    .export-filename-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px;
+    }
+    .export-filename-row .text-input { flex: 1; }
+    .filename-ext { font-size: 14px; font-weight: 600; color: #6b7a99; white-space: nowrap; }
+
+    .btn-export {
+      background: #27ae60; color: #fff;
+      border: none; border-radius: 8px;
+      padding: 14px 28px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; width: 100%;
+    }
+    .btn-export:hover { background: #219a52; }
+
+    .success-banner {
+      background: #e8f5e9; border: 1px solid #81c784;
+      border-radius: 8px; padding: 12px 16px;
+      font-size: 13px; color: #2e7d32;
+      margin-top: 12px; display: none;
+    }
+    .success-banner.show { display: block; }
+
+    .teacher-course-tag {
+      font-size: 10px; font-weight: 400;
+      color: #7a90b8; margin-left: 4px;
+    }
+
+    /* ── Feasibility tables ── */
+    .feasibility-table-wrapper {
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 10px;
+      overflow: auto;
+      max-width: 700px;
+    }
+    table.feasibility-table { border-collapse: collapse; font-size: 13px; width: 100%; }
+    .feasibility-table thead th {
+      background: #1e2a4a; color: #e8f0ff;
+      padding: 10px 16px;
+      font-size: 12px; font-weight: 600;
+      text-align: left; white-space: nowrap;
+    }
+    .feasibility-table tbody td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #edf0f5;
+      vertical-align: middle;
+    }
+    .feasibility-table tbody tr:last-child td { border-bottom: none; }
+    .feasibility-table tbody tr:hover td { background: #f5f8fd; }
+    .feasibility-table td:nth-child(2),
+    .feasibility-table td:nth-child(3) { text-align: center; }
+    .feas-ok   { color: #27ae60; font-weight: 700; }
+    .feas-fail { color: #c0392b; font-weight: 700; }
+    .feas-banner-ok {
+      background: #e8f5e9; border: 1px solid #81c784;
+      border-radius: 10px; padding: 14px 18px;
+      font-size: 14px; font-weight: 600; color: #2e7d32;
+    }
+    .feas-banner-fail {
+      background: #ffebee; border: 1px solid #ef9a9a;
+      border-radius: 10px; padding: 14px 18px;
+      font-size: 14px; font-weight: 600; color: #c62828;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <h2>🏫 Horários Escolares</h2>
+    <span>Criar parâmetros (wizard)</span>
+  </div>
+  <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  <div class="sidebar-footer">
+    <button class="btn-reset" onclick="confirmReset()">🗑 Limpar e recomeçar</button>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main id="main">
+
+  <!-- ── ETAPA 1: Configuração Geral ── -->
+  <div id="page-1" class="page active">
+    <div class="topbar">
+      <h1>⚙️ Configuração Geral</h1>
+      <span class="topbar-sub">Etapa 1 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-1"></div>
+      <div id="validation-1" class="validation-banner"></div>
+
+      <div class="form-group">
+        <label class="form-label" for="meta-name">Nome do parampack</label>
+        <input type="text" id="meta-name" class="text-input" style="max-width:380px"
+               placeholder="ex: jan26_matutino" oninput="saveState()" />
+        <p class="form-hint">Usado como nome do arquivo JSON exportado.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Aulas por dia</label>
+        <div class="radio-group">
+          <label class="radio-opt"><input type="radio" name="slots-per-day" value="4" onchange="saveState()"> 4 aulas</label>
+          <label class="radio-opt"><input type="radio" name="slots-per-day" value="5" checked onchange="saveState()"> 5 aulas</label>
+          <label class="radio-opt"><input type="radio" name="slots-per-day" value="6" onchange="saveState()"> 6 aulas</label>
+        </div>
+        <p class="form-hint">Define quantos timeslots existem por dia na grade.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Turno</label>
+        <div class="radio-group">
+          <label class="radio-opt"><input type="radio" name="turno" value="manha" checked onchange="saveState()"> 🌅 Matutino (a partir das 7h30)</label>
+          <label class="radio-opt"><input type="radio" name="turno" value="tarde" onchange="saveState()"> 🌇 Vespertino (a partir das 13h30)</label>
+        </div>
+        <p class="form-hint">Afeta apenas os rótulos de horário na grade de disponibilidade.</p>
+      </div>
+    </div>
+    <div class="step-footer">
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(2)">Próximo: Turmas →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 2: Turmas ── -->
+  <div id="page-2" class="page">
+    <div class="topbar">
+      <h1>📘 Turmas</h1>
+      <span class="topbar-sub">Etapa 2 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-2"></div>
+      <div id="validation-2" class="validation-banner"></div>
+
+      <p class="section-label">Adicionar turma</p>
+      <div class="chip-input-row">
+        <input type="text" id="input-group" class="text-input"
+               placeholder="ex: 6a, 7b, 2ºAno…"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();addGroup();}" />
+        <button class="btn-add" onclick="addGroup()">+ Adicionar</button>
+      </div>
+      <p id="error-group" class="error-msg"></p>
+
+      <p class="section-label">Turmas cadastradas</p>
+      <div class="chip-list" id="group-chips"></div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(1, true)">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(3)">Próximo: Professores →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 3: Professores ── -->
+  <div id="page-3" class="page">
+    <div class="topbar">
+      <h1>🧑‍🏫 Professores</h1>
+      <span class="topbar-sub">Etapa 3 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-3"></div>
+      <div id="validation-3" class="validation-banner"></div>
+
+      <p class="section-label">Adicionar professor(a)</p>
+      <div class="chip-input-row">
+        <input type="text" id="input-teacher" class="text-input"
+               placeholder="ex: Vanessa, CarolinaS…"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();addTeacher();}" />
+        <button class="btn-add" onclick="addTeacher()">+ Adicionar</button>
+      </div>
+      <p id="error-teacher" class="error-msg"></p>
+
+      <p class="section-label">Professores cadastrados</p>
+      <div class="chip-list" id="teacher-chips"></div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(2, true)">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(4)">Próximo: Disciplinas →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 4: Disciplinas ── -->
+  <div id="page-4" class="page">
+    <div class="topbar">
+      <h1>📚 Disciplinas</h1>
+      <span class="topbar-sub">Etapa 4 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-4"></div>
+      <div id="validation-4" class="validation-banner"></div>
+
+      <p style="font-size:13px;color:#6b7a99;margin-bottom:16px">
+        Cada disciplina tem <strong>um professor responsável</strong>. Um professor só pode estar em uma disciplina.
+      </p>
+      <div id="courses-list"></div>
+      <button class="btn-secondary btn-small" onclick="addCourse()" style="margin-top:8px">
+        + Nova disciplina
+      </button>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(3, true)">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(5)">Próximo: Disponibilidade →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 5: Disponibilidade ── -->
+  <div id="page-5" class="page">
+    <div class="topbar">
+      <h1>📅 Disponibilidade dos Professores</h1>
+      <span class="topbar-sub">Etapa 5 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-5"></div>
+
+      <p style="font-size:13px;color:#6b7a99;margin-bottom:18px">
+        Clique nas células para alternar disponibilidade.
+        <span style="color:#2e7d32;font-weight:600">Verde ✓ = disponível</span> &nbsp;·&nbsp;
+        <span style="color:#8898b0;font-weight:600">Cinza ✕ = indisponível</span>.
+        Por padrão, todos os horários estão disponíveis.
+      </p>
+
+      <div class="avail-controls">
+        <label class="form-label" style="margin:0;white-space:nowrap">Professor:</label>
+        <select class="styled-select" id="avail-teacher-select"
+                onchange="renderAvailGrid()" style="min-width:160px"></select>
+        <button class="btn-secondary btn-small" onclick="setAllAvail(true)">✓ Marcar todos</button>
+        <button class="btn-secondary btn-small" onclick="setAllAvail(false)">✕ Limpar todos</button>
+      </div>
+
+      <div class="copy-row" style="margin-bottom:16px;display:inline-flex">
+        <span>Copiar disponibilidade de:</span>
+        <select class="styled-select btn-small" id="copy-from-select"
+                style="min-width:140px;padding-top:6px;padding-bottom:6px"></select>
+        <button class="btn-secondary btn-small" onclick="copyAvailFrom()">Aplicar</button>
+      </div>
+
+      <div class="avail-grid-wrapper" id="avail-grid-container"></div>
+      <p class="avail-summary" id="avail-summary"></p>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(4, true)">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(6)">Próximo: Carga Horária →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 6: Carga Horária ── -->
+  <div id="page-6" class="page">
+    <div class="topbar">
+      <h1>📊 Carga Horária Semanal</h1>
+      <span class="topbar-sub">Etapa 6 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-6"></div>
+
+      <p style="font-size:13px;color:#6b7a99;margin-bottom:18px">
+        Quantas aulas/semana cada professor ministra para cada turma.
+        Use <strong>0</strong> para nenhuma aula.
+        O rodapé mostra o total por turma.
+      </p>
+
+      <div class="qty-table-wrapper">
+        <table class="qty-table" id="qty-table"></table>
+      </div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(5, true)">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(7)">Próximo: Validação →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 7: Validação ── -->
+  <div id="page-7" class="page">
+    <div class="topbar">
+      <h1>🔍 Validação de Viabilidade</h1>
+      <span class="topbar-sub">Etapa 7 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-7"></div>
+
+      <p style="font-size:13px;color:#6b7a99;margin-bottom:18px">
+        Verifica se a disponibilidade dos professores é suficiente para atender toda a carga horária configurada.
+      </p>
+
+      <button class="btn-primary" onclick="runFeasibilityCheck()" style="margin-bottom:24px">
+        ↪️ Rodar Validação
+      </button>
+
+      <div id="feasibility-result" style="display:none">
+        <div id="feasibility-banner" style="margin-bottom:20px"></div>
+
+        <p class="section-label">Check 1 — Demanda total por professor</p>
+        <div class="feasibility-table-wrapper" style="margin-bottom:24px">
+          <table class="feasibility-table" id="feasibility-table-1"></table>
+        </div>
+
+        <p class="section-label">Check 2 — Por par professor × turma</p>
+        <div class="feasibility-table-wrapper">
+          <table class="feasibility-table" id="feasibility-table-2"></table>
+        </div>
+      </div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(6, true)">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(8)">Próximo: Exportar →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 8: Exportar ── -->
+  <div id="page-8" class="page">
+    <div class="topbar">
+      <h1>⬇️ Exportar Parampack</h1>
+      <span class="topbar-sub">Etapa 8 de 8</span>
+    </div>
+    <div class="content">
+      <div id="progress-8"></div>
+
+      <p class="section-label">Resumo</p>
+      <div class="summary-grid" id="summary-grid"></div>
+
+      <p class="section-label">Exportar JSON</p>
+      <div class="export-card">
+        <div class="form-group">
+          <label class="form-label">Nome do arquivo</label>
+          <div class="export-filename-row">
+            <input type="text" id="export-name" class="text-input" placeholder="parampack" />
+            <span class="filename-ext">.json</span>
+          </div>
+        </div>
+        <button class="btn-export" onclick="exportJSON()">⬇ Baixar parampack.json</button>
+        <div id="export-success" class="success-banner">✅ Arquivo baixado!</div>
+      </div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(7, true)">← Voltar</button>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════
+// Constants
+// ══════════════════════════════════════════
+
+const STEPS = [
+  { id: 1, icon: '⚙️',  label: 'Config'          },
+  { id: 2, icon: '📘',  label: 'Turmas'          },
+  { id: 3, icon: '🧑‍🏫', label: 'Professores'     },
+  { id: 4, icon: '📚',  label: 'Disciplinas'     },
+  { id: 5, icon: '📅',  label: 'Disponibilidade' },
+  { id: 6, icon: '📊',  label: 'Carga Horária'   },
+  { id: 7, icon: '🔍',  label: 'Validação'       },
+  { id: 8, icon: '⬇️',  label: 'Exportar'        },
+];
+
+const DAYS_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+
+const MANHA_TIMES  = ['7h30–8h20',  '8h20–9h10',  '9h10–10h00', '10h00–10h50', '10h50–11h40', '11h40–12h30'];
+const TARDE_TIMES  = ['13h30–14h25','14h25–15h20','15h20–16h15','16h15–17h10', '17h10–18h05', '18h05–19h00'];
+
+const STORAGE_KEY = 'parampack_wizard_v1';
+
+// ══════════════════════════════════════════
+// State
+// ══════════════════════════════════════════
+
+let state = {
+  currentStep : 1,
+  visited     : new Set([1]),
+  meta        : { name: '', slotsPerDay: 5, turno: 'manha' },
+  groups      : [],   // ['1a', '2a', ...]
+  teachers    : [],   // ['Vanessa', ...]
+  courses     : [],   // [{ name: 'Arte', teacher: 'Vanessa' }, ...]
+  availability: {},   // { 'Vanessa': [true, true, false, ...] }   length = slotsPerDay * 5
+  weeklyQty   : {},   // { 'Vanessa': { '1a': 2, '2a': 0, ... } }
+};
+
+// ══════════════════════════════════════════
+// Persistence (localStorage)
+// ══════════════════════════════════════════
+
+function saveState() {
+  syncMetaFromForm();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...state,
+      visited: [...state.visited],
+    }));
+  } catch (_) {}
+}
+
+function loadSavedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    state = { ...parsed, visited: new Set(parsed.visited || [1]) };
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function confirmReset() {
+  if (!confirm('Apagar todos os dados e recomeçar do zero?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+// ══════════════════════════════════════════
+// Meta ↔ Form sync
+// ══════════════════════════════════════════
+
+function syncMetaFromForm() {
+  const nameEl    = document.getElementById('meta-name');
+  const slotsEl   = document.querySelector('input[name="slots-per-day"]:checked');
+  const turnoEl   = document.querySelector('input[name="turno"]:checked');
+  if (nameEl)  state.meta.name        = nameEl.value.trim();
+  if (slotsEl) state.meta.slotsPerDay = parseInt(slotsEl.value);
+  if (turnoEl) state.meta.turno       = turnoEl.value;
+}
+
+function restoreMetaToForm() {
+  const nameEl = document.getElementById('meta-name');
+  if (nameEl) nameEl.value = state.meta.name;
+
+  const slotsEl = document.querySelector(`input[name="slots-per-day"][value="${state.meta.slotsPerDay}"]`);
+  if (slotsEl) slotsEl.checked = true;
+
+  const turnoEl = document.querySelector(`input[name="turno"][value="${state.meta.turno}"]`);
+  if (turnoEl) turnoEl.checked = true;
+}
+
+// ══════════════════════════════════════════
+// Navigation
+// ══════════════════════════════════════════
+
+function buildSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = STEPS.map(s => {
+    const isCurrent   = s.id === state.currentStep;
+    const isCompleted = state.visited.has(s.id) && !isCurrent;
+    const isDisabled  = !state.visited.has(s.id);
+    const cls = [
+      isCurrent  ? 'active'   : '',
+      isCompleted? 'completed': '',
+      isDisabled ? 'disabled' : '',
+    ].filter(Boolean).join(' ');
+    const num = isCompleted ? '✓' : s.id;
+    return `<div class="nav-item ${cls}" onclick="navClick(${s.id})">
+      <div class="nav-step-num">${num}</div>
+      ${s.icon} ${s.label}
+    </div>`;
+  }).join('');
+}
+
+function navClick(step) {
+  if (!state.visited.has(step)) return;
+  goToStep(step, true);
+}
+
+function showPage(step) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + step).classList.add('active');
+}
+
+function renderProgress(current) {
+  for (let s = 1; s <= 8; s++) {
+    const el = document.getElementById('progress-' + s);
+    if (!el) continue;
+    let html = '<div class="progress-steps">';
+    STEPS.forEach((step, idx) => {
+      const done    = step.id < current;
+      const active  = step.id === current;
+      html += `<div class="ps-item ${done ? 'done' : ''} ${active ? 'active' : ''}">
+        <div class="ps-circle">${done ? '✓' : step.id}</div>
+        ${active || done ? `<span class="ps-label">${step.label}</span>` : ''}
+      </div>`;
+      if (idx < STEPS.length - 1)
+        html += `<div class="ps-line ${done ? 'done' : ''}"></div>`;
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  }
+}
+
+function goToStep(targetStep, skipValidation = false) {
+  if (!skipValidation) {
+    syncMetaFromForm();
+    if (!validateStep(state.currentStep)) return;
+  }
+
+  state.visited.add(targetStep);
+  state.currentStep = targetStep;
+
+  showPage(targetStep);
+  renderProgress(targetStep);
+  buildSidebar();
+
+  // Per-step setup
+  if (targetStep === 4) renderCoursesList();
+  if (targetStep === 5) { populateAvailSelects(); renderAvailGrid(); }
+  if (targetStep === 6) renderQtyTable();
+  if (targetStep === 7) {
+    // reset validation result so user clicks the button each vez
+    const res = document.getElementById('feasibility-result');
+    if (res) res.style.display = 'none';
+  }
+  if (targetStep === 8) {
+    renderSummary();
+    const expName = document.getElementById('export-name');
+    if (expName && state.meta.name) expName.value = state.meta.name;
+  }
+
+  saveState();
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════════════════
+// Validation
+// ══════════════════════════════════════════
+
+function showValidation(step, msg) {
+  const el = document.getElementById('validation-' + step);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.toggle('show', !!msg);
+}
+
+function validateStep(step) {
+  showValidation(step, '');
+  if (step === 1) {
+    if (!state.meta.name) {
+      showValidation(1, 'Informe um nome para o parampack antes de continuar.');
+      return false;
+    }
+  }
+  if (step === 2) {
+    if (state.groups.length === 0) {
+      showValidation(2, 'Adicione pelo menos uma turma antes de continuar.');
+      return false;
+    }
+  }
+  if (step === 3) {
+    if (state.teachers.length === 0) {
+      showValidation(3, 'Adicione pelo menos um professor antes de continuar.');
+      return false;
+    }
+  }
+  if (step === 4) {
+    if (state.courses.length === 0) {
+      showValidation(4, 'Adicione pelo menos uma disciplina antes de continuar.');
+      return false;
+    }
+    if (state.courses.some(c => !c.name || !c.teacher)) {
+      showValidation(4, 'Preencha o nome e o professor de todas as disciplinas.');
+      return false;
+    }
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════
+// Etapa 2 — Groups
+// ══════════════════════════════════════════
+
+function addGroup() {
+  const input = document.getElementById('input-group');
+  const errEl = document.getElementById('error-group');
+  const val   = input.value.trim();
+
+  if (!val) {
+    errEl.textContent = 'Nome da turma não pode estar vazio.';
+    errEl.classList.add('show');
+    return;
+  }
+  if (state.groups.includes(val)) {
+    errEl.textContent = `A turma "${val}" já foi adicionada.`;
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+  state.groups.push(val);
+  state.groups.sort(naturalSort);
+  input.value = '';
+  input.focus();
+  renderGroupChips();
+  saveState();
+}
+
+function removeGroup(name) {
+  state.groups = state.groups.filter(g => g !== name);
+  renderGroupChips();
+  saveState();
+}
+
+function renderGroupChips() {
+  const el = document.getElementById('group-chips');
+  if (!el) return;
+  el.innerHTML = state.groups.length === 0
+    ? '<span class="chip-empty">Nenhuma turma ainda.</span>'
+    : state.groups.map(g => `
+        <div class="chip">
+          ${escHtml(g)}
+          <button class="chip-remove" data-name="${escHtml(g)}" onclick="removeGroup(this.dataset.name)" title="Remover">×</button>
+        </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// Etapa 3 — Teachers
+// ══════════════════════════════════════════
+
+function addTeacher() {
+  const input = document.getElementById('input-teacher');
+  const errEl = document.getElementById('error-teacher');
+  const val   = input.value.trim();
+
+  if (!val) {
+    errEl.textContent = 'Nome do professor não pode estar vazio.';
+    errEl.classList.add('show');
+    return;
+  }
+  if (state.teachers.includes(val)) {
+    errEl.textContent = `O professor "${val}" já foi adicionado.`;
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+  state.teachers.push(val);
+  state.teachers.sort(naturalSort);
+
+  // Init availability (all available)
+  const total = state.meta.slotsPerDay * 5;
+  if (!state.availability[val]) state.availability[val] = new Array(total).fill(true);
+
+  // Init weeklyQty
+  if (!state.weeklyQty[val]) state.weeklyQty[val] = {};
+
+  input.value = '';
+  input.focus();
+  renderTeacherChips();
+  saveState();
+}
+
+function removeTeacher(name) {
+  state.teachers = state.teachers.filter(t => t !== name);
+  // Clear course assignment for this teacher
+  state.courses = state.courses.map(c => c.teacher === name ? { ...c, teacher: '' } : c);
+  delete state.availability[name];
+  delete state.weeklyQty[name];
+  renderTeacherChips();
+  renderCoursesList();
+  saveState();
+}
+
+function renderTeacherChips() {
+  const el = document.getElementById('teacher-chips');
+  if (!el) return;
+  el.innerHTML = state.teachers.length === 0
+    ? '<span class="chip-empty">Nenhum professor ainda.</span>'
+    : state.teachers.map(t => `
+        <div class="chip">
+          ${escHtml(t)}
+          <button class="chip-remove" data-name="${escHtml(t)}" onclick="removeTeacher(this.dataset.name)" title="Remover">×</button>
+        </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// Etapa 4 — Courses
+// ══════════════════════════════════════════
+
+function addCourse() {
+  state.courses.push({ name: '', teacher: '' });
+  renderCoursesList();
+  saveState();
+}
+
+function removeCourse(idx) {
+  state.courses.splice(idx, 1);
+  renderCoursesList();
+  saveState();
+}
+
+function updateCourse(idx, field, value) {
+  state.courses[idx][field] = value;
+  // Re-render to update "em uso" indicators
+  renderCoursesList();
+  saveState();
+}
+
+function renderCoursesList() {
+  const el = document.getElementById('courses-list');
+  if (!el) return;
+
+  // Map teacher → course index (for "em uso" indicator)
+  const usedTeacherAt = {};
+  state.courses.forEach((c, i) => { if (c.teacher) usedTeacherAt[c.teacher] = i; });
+
+  if (state.courses.length === 0) {
+    el.innerHTML = '<p style="font-size:13px;color:#a0b0c8;margin-bottom:8px">Nenhuma disciplina ainda.</p>';
+    return;
+  }
+
+  el.innerHTML = state.courses.map((c, idx) => {
+    const options = state.teachers.map(t => {
+      const usedElsewhere = usedTeacherAt[t] !== undefined && usedTeacherAt[t] !== idx;
+      return `<option value="${escHtml(t)}" ${c.teacher === t ? 'selected' : ''} ${usedElsewhere ? 'disabled' : ''}>
+        ${escHtml(t)}${usedElsewhere ? ' (em uso)' : ''}
+      </option>`;
+    }).join('');
+
+    return `<div class="course-card">
+      <input type="text" class="text-input" placeholder="Nome da disciplina"
+             value="${escHtml(c.name)}"
+             oninput="state.courses[${idx}].name=this.value;saveState()" />
+      <select class="styled-select" onchange="updateCourse(${idx},'teacher',this.value)">
+        <option value="">— Selecione professor —</option>
+        ${options}
+      </select>
+      <button class="btn-icon" onclick="removeCourse(${idx})" title="Remover disciplina">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// Etapa 5 — Availability
+// ══════════════════════════════════════════
+
+function initAvailability() {
+  const total = state.meta.slotsPerDay * 5;
+  state.teachers.forEach(t => {
+    if (!state.availability[t] || state.availability[t].length !== total) {
+      state.availability[t] = new Array(total).fill(true);
+    }
+  });
+}
+
+function populateAvailSelects() {
+  initAvailability();
+  const sel      = document.getElementById('avail-teacher-select');
+  const copyFrom = document.getElementById('copy-from-select');
+  if (!sel || !copyFrom) return;
+
+  if (state.teachers.length === 0) {
+    sel.innerHTML      = '<option value="">Nenhum professor cadastrado</option>';
+    copyFrom.innerHTML = '<option value="">—</option>';
+    return;
+  }
+  sel.innerHTML = state.teachers.map(t =>
+    `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
+  copyFrom.innerHTML = '<option value="">— Selecione —</option>' +
+    state.teachers.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
+}
+
+function renderAvailGrid() {
+  const sel       = document.getElementById('avail-teacher-select');
+  const container = document.getElementById('avail-grid-container');
+  const summary   = document.getElementById('avail-summary');
+  if (!sel || !container) return;
+
+  const teacher     = sel.value;
+  const slotsPerDay = state.meta.slotsPerDay;
+  const total       = slotsPerDay * 5;
+
+  if (!teacher) {
+    container.innerHTML = '<p style="padding:20px;color:#8898b0;font-size:13px">Nenhum professor selecionado.</p>';
+    return;
+  }
+
+  // Ensure array exists with correct length
+  if (!state.availability[teacher] || state.availability[teacher].length !== total) {
+    state.availability[teacher] = new Array(total).fill(true);
+  }
+  const avail     = state.availability[teacher];
+  const timeLabels = state.meta.turno === 'manha' ? MANHA_TIMES : TARDE_TIMES;
+
+  let html = '<table class="avail-grid"><thead><tr><th>Aula</th>';
+  DAYS_SHORT.forEach(d => { html += `<th>${d}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  for (let aula = 0; aula < slotsPerDay; aula++) {
+    const label = timeLabels[aula] || `${aula + 1}ª`;
+    html += `<tr><td>${aula + 1}ª aula<br>
+      <span style="font-size:10px;font-weight:400;color:#8898b0">${label}</span></td>`;
+    for (let day = 0; day < 5; day++) {
+      const slotIdx  = day * slotsPerDay + aula;
+      const isAvail  = avail[slotIdx] !== false;
+      html += `<td><div class="avail-cell ${isAvail ? 'available' : 'unavailable'}"
+        data-teacher="${escHtml(teacher)}" data-slot="${slotIdx}"
+        onclick="toggleAvailCell(this.dataset.teacher, parseInt(this.dataset.slot))">
+        ${isAvail ? '✓' : '✕'}
+      </div></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  const availCount = avail.filter(v => v !== false).length;
+  if (summary) summary.textContent =
+    `${teacher}: ${availCount} de ${total} horários disponíveis (${5} dias × ${slotsPerDay} aulas/dia)`;
+}
+
+function toggleAvailCell(teacher, slotIdx) {
+  if (!state.availability[teacher]) return;
+  state.availability[teacher][slotIdx] = !state.availability[teacher][slotIdx];
+  renderAvailGrid();
+  saveState();
+}
+
+function setAllAvail(value) {
+  const sel = document.getElementById('avail-teacher-select');
+  if (!sel || !sel.value) return;
+  const total = state.meta.slotsPerDay * 5;
+  state.availability[sel.value] = new Array(total).fill(value);
+  renderAvailGrid();
+  saveState();
+}
+
+function copyAvailFrom() {
+  const toTeacher   = document.getElementById('avail-teacher-select')?.value;
+  const fromTeacher = document.getElementById('copy-from-select')?.value;
+  if (!toTeacher || !fromTeacher || toTeacher === fromTeacher) return;
+  if (!state.availability[fromTeacher]) return;
+  state.availability[toTeacher] = [...state.availability[fromTeacher]];
+  renderAvailGrid();
+  saveState();
+}
+
+// ══════════════════════════════════════════
+// Etapa 6 — Weekly Qty
+// ══════════════════════════════════════════
+
+function renderQtyTable() {
+  const el       = document.getElementById('qty-table');
+  if (!el) return;
+  const teachers = state.teachers;
+  const groups   = state.groups;
+
+  if (teachers.length === 0 || groups.length === 0) {
+    el.innerHTML = '<tr><td colspan="99" style="padding:24px;color:#8898b0;font-size:13px;text-align:center">Adicione turmas e professores nas etapas anteriores.</td></tr>';
+    return;
+  }
+
+  // Ensure all qty entries exist
+  teachers.forEach(t => {
+    if (!state.weeklyQty[t]) state.weeklyQty[t] = {};
+    groups.forEach(g => {
+      if (state.weeklyQty[t][g] === undefined) state.weeklyQty[t][g] = 0;
+    });
+  });
+
+  // Teacher → course name mapping (for display)
+  const teacherCourse = {};
+  state.courses.forEach(c => { if (c.teacher && c.name) teacherCourse[c.teacher] = c.name; });
+
+  let html = `<thead><tr>
+    <th>Professor</th>
+    ${groups.map(g => `<th>${escHtml(g)}</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  teachers.forEach(t => {
+    const course = teacherCourse[t]
+      ? `<span class="teacher-course-tag">(${escHtml(teacherCourse[t])})</span>`
+      : '<span class="teacher-course-tag" style="color:#e08080">(sem disciplina)</span>';
+    html += `<tr>
+      <td>${escHtml(t)}${course}</td>
+      ${groups.map(g => {
+        const val = state.weeklyQty[t][g] || 0;
+        return `<td><input type="number" class="qty-input ${val === 0 ? 'zero' : ''}"
+          min="0" max="20" value="${val}"
+          data-teacher="${escHtml(t)}" data-group="${escHtml(g)}"
+          oninput="updateQty(this)"
+          onfocus="this.select()" /></td>`;
+      }).join('')}
+    </tr>`;
+  });
+
+  html += '</tbody>';
+
+  // Footer — totals per group
+  html += `<tfoot><tr>
+    <td>Total aulas/semana</td>
+    ${groups.map(g => {
+      const total = teachers.reduce((s, t) => s + (state.weeklyQty[t]?.[g] || 0), 0);
+      return `<td id="foot-${escHtml(g).replace(/[^a-z0-9]/gi,'_')}">${total || ''}</td>`;
+    }).join('')}
+  </tr></tfoot>`;
+
+  el.innerHTML = html;
+}
+
+function updateQty(input) {
+  const teacher = input.dataset.teacher;
+  const group   = input.dataset.group;
+  const val     = Math.max(0, parseInt(input.value) || 0);
+  input.value   = val;
+  if (!state.weeklyQty[teacher]) state.weeklyQty[teacher] = {};
+  state.weeklyQty[teacher][group] = val;
+  input.classList.toggle('zero', val === 0);
+
+  // Update footer for this group
+  const footId = 'foot-' + group.replace(/[^a-z0-9]/gi, '_');
+  const footEl = document.getElementById(footId);
+  if (footEl) {
+    const total = state.teachers.reduce((s, t) => s + (state.weeklyQty[t]?.[group] || 0), 0);
+    footEl.textContent = total || '';
+  }
+
+  saveState();
+}
+
+// ══════════════════════════════════════════
+// Etapa 7 — Summary & Export
+// ══════════════════════════════════════════
+
+function renderSummary() {
+  const el = document.getElementById('summary-grid');
+  if (!el) return;
+  const totalSessions = state.teachers.reduce((sum, t) =>
+    sum + state.groups.reduce((s, g) => s + (state.weeklyQty[t]?.[g] || 0), 0), 0);
+
+  el.innerHTML = [
+    { num: state.groups.length,   label: 'Turmas'       },
+    { num: state.teachers.length, label: 'Professores'  },
+    { num: state.courses.length,  label: 'Disciplinas'  },
+    { num: totalSessions,         label: 'Aulas/semana' },
+  ].map(c => `<div class="summary-card">
+    <div class="summary-num">${c.num}</div>
+    <div class="summary-label">${c.label}</div>
+  </div>`).join('');
+}
+
+function buildParampack() {
+  const { meta, groups, teachers, courses, availability, weeklyQty } = state;
+  const slotsPerDay = meta.slotsPerDay;
+  const total       = slotsPerDay * 5;
+
+  // teacher_availability: { name: [slot_index, ...] }
+  const teacher_availability = {};
+  teachers.forEach(t => {
+    const avail = availability[t] || new Array(total).fill(true);
+    teacher_availability[t] = avail
+      .map((v, i) => v !== false ? i : -1)
+      .filter(i => i >= 0);
+  });
+
+  // teacher_group_permissions: groups where weekly_qty > 0
+  const teacher_group_permissions = {};
+  teachers.forEach(t => {
+    teacher_group_permissions[t] = groups.filter(g => (weeklyQty[t]?.[g] || 0) > 0);
+  });
+
+  // group_course_requirements: from weeklyQty + teacher→course mapping
+  const teacherCourse = {};
+  courses.forEach(c => { if (c.teacher && c.name) teacherCourse[c.teacher] = c.name; });
+
+  const group_course_requirements = [];
+  teachers.forEach(t => {
+    const courseName = teacherCourse[t];
+    if (!courseName) return;
+    groups.forEach(g => {
+      const qty = weeklyQty[t]?.[g] || 0;
+      if (qty > 0) {
+        group_course_requirements.push({ group_name: g, course_name: courseName, weekly_qty: qty });
+      }
+    });
+  });
+
+  return {
+    meta: {
+      name        : meta.name || 'parampack',
+      generated_at: new Date().toISOString(),
+      version     : 1,
+    },
+    groups,
+    teachers,
+    courses: courses
+      .filter(c => c.name && c.teacher)
+      .map(c => ({ course_name: c.name, teacher_names: [c.teacher] })),
+    teacher_availability,
+    teacher_group_permissions,
+    group_course_requirements,
+  };
+}
+
+function exportJSON() {
+  const nameEl   = document.getElementById('export-name');
+  const filename = (nameEl?.value?.trim() || state.meta.name || 'parampack') + '.json';
+
+  const pack = buildParampack();
+  const json = JSON.stringify(pack, null, 2);
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  const ok = document.getElementById('export-success');
+  if (ok) {
+    ok.classList.add('show');
+    setTimeout(() => ok.classList.remove('show'), 3000);
+  }
+}
+
+// ══════════════════════════════════════════
+// Etapa 7 — Feasibility checks
+// ══════════════════════════════════════════
+
+/**
+ * Check 1: total demand per teacher vs their total availability.
+ * Returns { rows: [{teacher, need, avail, ok}], anyFail }
+ */
+function checkTeacherDemand() {
+  const { teachers, courses, availability, weeklyQty, meta } = state;
+  const total = meta.slotsPerDay * 5;
+
+  // teacher → course name mapping
+  const teacherCourse = {};
+  courses.forEach(c => { if (c.teacher && c.name) teacherCourse[c.teacher] = c.name; });
+
+  const rows = teachers.map(t => {
+    const need  = state.groups.reduce((s, g) => s + (weeklyQty[t]?.[g] || 0), 0);
+    const avail = (availability[t] || new Array(total).fill(true))
+      .filter(v => v !== false).length;
+    return { teacher: t, course: teacherCourse[t] || '—', need, avail, ok: need <= avail };
+  });
+
+  return { rows, anyFail: rows.some(r => !r.ok) };
+}
+
+/**
+ * Check 2: per teacher×group pair — need vs teacher's available slots.
+ * Returns { rows: [{teacher, group, need, avail, ok}], anyFail }
+ */
+function checkTeacherGroupCoverage() {
+  const { teachers, groups, courses, availability, weeklyQty, meta } = state;
+  const total = meta.slotsPerDay * 5;
+
+  const teacherCourse = {};
+  courses.forEach(c => { if (c.teacher && c.name) teacherCourse[c.teacher] = c.name; });
+
+  const rows = [];
+  teachers.forEach(t => {
+    const tAvail = (availability[t] || new Array(total).fill(true))
+      .filter(v => v !== false).length;
+
+    groups.forEach(g => {
+      const need = weeklyQty[t]?.[g] || 0;
+      if (need === 0) return;
+      const ok = tAvail >= need;
+      rows.push({ teacher: t, course: teacherCourse[t] || '—', group: g, need, avail: tAvail, ok });
+    });
+  });
+
+  return { rows, anyFail: rows.some(r => !r.ok) };
+}
+
+function runFeasibilityCheck() {
+  const check1 = checkTeacherDemand();
+  const check2 = checkTeacherGroupCoverage();
+  const anyFail = check1.anyFail || check2.anyFail;
+
+  // Banner
+  const banner = document.getElementById('feasibility-banner');
+  banner.innerHTML = anyFail
+    ? '<div class="feas-banner-fail">❌ Existem conflitos de disponibilidade. Corrija antes de exportar!</div>'
+    : '<div class="feas-banner-ok">🎉 Todas as demandas são atendidas pela disponibilidade! O parampack é viável.</div>';
+
+  // Table 1
+  const t1 = document.getElementById('feasibility-table-1');
+  t1.innerHTML = `
+    <thead><tr>
+      <th>Professor</th><th>Disciplina</th>
+      <th>Precisa</th><th>Disponível</th><th>Status</th>
+    </tr></thead>
+    <tbody>${check1.rows.map(r => `
+      <tr>
+        <td>${escHtml(r.teacher)}</td>
+        <td>${escHtml(r.course)}</td>
+        <td style="text-align:center">${r.need}</td>
+        <td style="text-align:center">${r.avail}</td>
+        <td class="${r.ok ? 'feas-ok' : 'feas-fail'}">${r.ok ? '✅ OK' : '❌ IMPOSSÍVEL'}</td>
+      </tr>`).join('')}
+    </tbody>`;
+
+  // Table 2
+  const t2 = document.getElementById('feasibility-table-2');
+  if (check2.rows.length === 0) {
+    t2.innerHTML = '<tbody><tr><td colspan="6" style="padding:16px;color:#8898b0;font-size:13px;text-align:center">Nenhum par professor × turma com carga > 0.</td></tr></tbody>';
+  } else {
+    t2.innerHTML = `
+      <thead><tr>
+        <th>Professor</th><th>Disciplina</th><th>Turma</th>
+        <th>Precisa</th><th>Disponível</th><th>Status</th>
+      </tr></thead>
+      <tbody>${check2.rows.map(r => `
+        <tr>
+          <td>${escHtml(r.teacher)}</td>
+          <td>${escHtml(r.course)}</td>
+          <td>${escHtml(r.group)}</td>
+          <td style="text-align:center">${r.need}</td>
+          <td style="text-align:center">${r.avail}</td>
+          <td class="${r.ok ? 'feas-ok' : 'feas-fail'}">${r.ok ? '✅ OK' : '❌ IMPOSSÍVEL'}</td>
+        </tr>`).join('')}
+      </tbody>`;
+  }
+
+  document.getElementById('feasibility-result').style.display = 'block';
+}
+
+// ══════════════════════════════════════════
+// Utils
+// ══════════════════════════════════════════
+
+function naturalSort(a, b) {
+  return String(a).localeCompare(String(b), 'pt', { numeric: true });
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════
+
+(function init() {
+  const hadSaved = loadSavedState();
+  buildSidebar();
+  renderProgress(state.currentStep);
+
+  if (hadSaved) {
+    restoreMetaToForm();
+    renderGroupChips();
+    renderTeacherChips();
+    showPage(state.currentStep);
+    if (state.currentStep === 4) renderCoursesList();
+    if (state.currentStep === 5) { populateAvailSelects(); renderAvailGrid(); }
+    if (state.currentStep === 6) renderQtyTable();
+    if (state.currentStep === 7) renderSummary();
+  } else {
+    renderGroupChips();
+    renderTeacherChips();
+  }
+})();
+</script>
+</body>
+</html>
