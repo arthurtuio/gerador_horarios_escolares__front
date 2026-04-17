@@ -514,6 +514,84 @@
       border-radius: 10px; padding: 14px 18px;
       font-size: 14px; font-weight: 600; color: #c62828;
     }
+
+    /* ── Soft Constraints (step 8) ── */
+    .constraint-card {
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .constraint-card.constraint-enabled { border-color: #1a6fc4; }
+
+    .constraint-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px; gap: 16px;
+    }
+    .constraint-info {
+      display: flex; align-items: center;
+      gap: 14px; flex: 1;
+    }
+    .constraint-icon { font-size: 24px; flex-shrink: 0; }
+    .constraint-title { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+    .constraint-desc  { font-size: 12px; color: #6b7a99; line-height: 1.5; }
+    .constraint-config {
+      border-top: 1px solid #edf0f5;
+      padding: 16px 20px;
+      background: #f8faff;
+    }
+
+    /* Toggle switch */
+    .sc-toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
+    .sc-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .sc-toggle-track {
+      width: 40px; height: 22px;
+      background: #c8d6eb; border-radius: 11px;
+      transition: background 0.2s; position: relative;
+    }
+    .sc-toggle-track::after {
+      content: ''; position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      background: #fff; border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .sc-toggle input:checked + .sc-toggle-track { background: #1a6fc4; }
+    .sc-toggle input:checked + .sc-toggle-track::after { transform: translateX(18px); }
+
+    /* Config sub-elements */
+    .sc-field-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .sc-field-label { font-size: 12px; font-weight: 600; color: #4a5568; white-space: nowrap; }
+    .sc-weight-input, .sc-num-input {
+      width: 72px; padding: 6px 10px;
+      border: 1.5px solid #c8d6eb; border-radius: 6px;
+      font-size: 13px; font-weight: 600; text-align: center; color: #1a1a2e;
+    }
+    .sc-weight-input:focus, .sc-num-input:focus { outline: none; border-color: #1a6fc4; }
+    .sc-sub-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: #8898b0; margin-bottom: 8px;
+    }
+    .sc-groups-config { display: flex; flex-direction: column; gap: 8px; }
+    .sc-group-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .sc-group-name {
+      font-size: 12px; font-weight: 700; color: #3a4a62;
+      min-width: 60px; background: #eef1f7;
+      border-radius: 4px; padding: 3px 8px;
+    }
+    .sc-checkboxes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sc-check-label {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; color: #4a5568; cursor: pointer; user-select: none;
+    }
+    .sc-check-label input { accent-color: #1a6fc4; cursor: pointer; }
+    .sc-overrides-list { display: flex; flex-direction: column; gap: 6px; }
+    .sc-override-row { display: flex; align-items: center; gap: 10px; }
+    .sc-override-course { font-size: 12px; font-weight: 600; color: #3a4a62; min-width: 120px; }
   </style>
 </head>
 <body>
@@ -542,7 +620,7 @@
   <div id="page-1" class="page active">
     <div class="topbar">
       <h1>⚙️ Configuração Geral</h1>
-      <span class="topbar-sub">Etapa 1 de 8</span>
+      <span class="topbar-sub">Etapa 1 de 9</span>
     </div>
     <div class="content">
       <div id="progress-1"></div>
@@ -584,7 +662,7 @@
   <div id="page-2" class="page">
     <div class="topbar">
       <h1>📘 Turmas</h1>
-      <span class="topbar-sub">Etapa 2 de 8</span>
+      <span class="topbar-sub">Etapa 2 de 9</span>
     </div>
     <div class="content">
       <div id="progress-2"></div>
@@ -613,7 +691,7 @@
   <div id="page-3" class="page">
     <div class="topbar">
       <h1>🧑‍🏫 Professores</h1>
-      <span class="topbar-sub">Etapa 3 de 8</span>
+      <span class="topbar-sub">Etapa 3 de 9</span>
     </div>
     <div class="content">
       <div id="progress-3"></div>
@@ -642,7 +720,7 @@
   <div id="page-4" class="page">
     <div class="topbar">
       <h1>📚 Disciplinas</h1>
-      <span class="topbar-sub">Etapa 4 de 8</span>
+      <span class="topbar-sub">Etapa 4 de 9</span>
     </div>
     <div class="content">
       <div id="progress-4"></div>
@@ -667,7 +745,7 @@
   <div id="page-5" class="page">
     <div class="topbar">
       <h1>📅 Disponibilidade dos Professores</h1>
-      <span class="topbar-sub">Etapa 5 de 8</span>
+      <span class="topbar-sub">Etapa 5 de 9</span>
     </div>
     <div class="content">
       <div id="progress-5"></div>
@@ -708,7 +786,7 @@
   <div id="page-6" class="page">
     <div class="topbar">
       <h1>📊 Carga Horária Semanal</h1>
-      <span class="topbar-sub">Etapa 6 de 8</span>
+      <span class="topbar-sub">Etapa 6 de 9</span>
     </div>
     <div class="content">
       <div id="progress-6"></div>
@@ -734,7 +812,7 @@
   <div id="page-7" class="page">
     <div class="topbar">
       <h1>🔍 Validação de Viabilidade</h1>
-      <span class="topbar-sub">Etapa 7 de 8</span>
+      <span class="topbar-sub">Etapa 7 de 9</span>
     </div>
     <div class="content">
       <div id="progress-7"></div>
@@ -764,18 +842,42 @@
     <div class="step-footer">
       <button class="btn-secondary" onclick="goToStep(6, true)">← Voltar</button>
       <div class="spacer"></div>
-      <button class="btn-primary" onclick="goToStep(8)">Próximo: Exportar →</button>
+      <button class="btn-primary" onclick="goToStep(8)">Próximo: Soft Constraints →</button>
     </div>
   </div>
 
-  <!-- ── ETAPA 8: Exportar ── -->
+  <!-- ── ETAPA 8: Soft Constraints ── -->
   <div id="page-8" class="page">
     <div class="topbar">
-      <h1>⬇️ Exportar Configurações da Grade</h1>
-      <span class="topbar-sub">Etapa 8 de 8</span>
+      <h1>🎯 Soft Constraints</h1>
+      <span class="topbar-sub">Etapa 8 de 9</span>
     </div>
     <div class="content">
       <div id="progress-8"></div>
+
+      <p style="font-size:13px;color:#6b7a99;margin-bottom:18px">
+        Configure restrições flexíveis para melhorar a qualidade da grade.
+        Cada constraint ativada adiciona uma penalidade ao algoritmo genético quando violada.
+        <strong>Desative todas</strong> se não quiser usar soft constraints.
+      </p>
+
+      <div id="soft-constraints-list"></div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-secondary" onclick="goToStep(7, true)">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="goToStep(9)">Próximo: Exportar →</button>
+    </div>
+  </div>
+
+  <!-- ── ETAPA 9: Exportar ── -->
+  <div id="page-9" class="page">
+    <div class="topbar">
+      <h1>⬇️ Exportar Configurações da Grade</h1>
+      <span class="topbar-sub">Etapa 9 de 9</span>
+    </div>
+    <div class="content">
+      <div id="progress-9"></div>
 
       <p class="section-label">Resumo</p>
       <div class="summary-grid" id="summary-grid"></div>
@@ -794,7 +896,7 @@
       </div>
     </div>
     <div class="step-footer">
-      <button class="btn-secondary" onclick="goToStep(7, true)">← Voltar</button>
+      <button class="btn-secondary" onclick="goToStep(8, true)">← Voltar</button>
       <div class="spacer"></div>
     </div>
   </div>
@@ -807,14 +909,15 @@
 // ══════════════════════════════════════════
 
 const STEPS = [
-  { id: 1, icon: '⚙️',  label: 'Config'          },
-  { id: 2, icon: '📘',  label: 'Turmas'          },
-  { id: 3, icon: '🧑‍🏫', label: 'Professores'     },
-  { id: 4, icon: '📚',  label: 'Disciplinas'     },
-  { id: 5, icon: '📅',  label: 'Disponibilidade' },
-  { id: 6, icon: '📊',  label: 'Carga Horária'   },
-  { id: 7, icon: '🔍',  label: 'Validação'       },
-  { id: 8, icon: '⬇️',  label: 'Exportar'        },
+  { id: 1, icon: '⚙️',  label: 'Config'           },
+  { id: 2, icon: '📘',  label: 'Turmas'           },
+  { id: 3, icon: '🧑‍🏫', label: 'Professores'      },
+  { id: 4, icon: '📚',  label: 'Disciplinas'      },
+  { id: 5, icon: '📅',  label: 'Disponibilidade'  },
+  { id: 6, icon: '📊',  label: 'Carga Horária'    },
+  { id: 7, icon: '🔍',  label: 'Validação'        },
+  { id: 8, icon: '🎯',  label: 'Soft Constraints' },
+  { id: 9, icon: '⬇️',  label: 'Exportar'         },
 ];
 
 const DAYS_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
@@ -837,6 +940,13 @@ let state = {
   courses     : [],   // [{ name: 'Arte', teacher: 'Vanessa' }, ...]
   availability: {},   // { 'Vanessa': [true, true, false, ...] }   length = slotsPerDay * 5
   weeklyQty   : {},   // { 'Vanessa': { '1a': 2, '2a': 0, ... } }
+  softConstraints: {
+    teacherConsecutive : { enabled: false, weight: 1 },
+    courseMaxPerDay    : { enabled: false, weight: 1, defaultMax: 2, overrides: {} },
+    groupBadSlots      : { enabled: false, weight: 0.25, badSlots: {} },
+    groupGoodDays      : { enabled: false, weight: 0.5,  goodDays: {} },
+    courseEmptyDays    : { enabled: false, weight: 1,    emptyDays: {} },
+  },
 };
 
 // ══════════════════════════════════════════
@@ -859,6 +969,16 @@ function loadSavedState() {
     if (!raw) return false;
     const parsed = JSON.parse(raw);
     state = { ...parsed, visited: new Set(parsed.visited || [1]) };
+    // Ensure softConstraints exists (backward compat)
+    if (!state.softConstraints) {
+      state.softConstraints = {
+        teacherConsecutive : { enabled: false, weight: 1 },
+        courseMaxPerDay    : { enabled: false, weight: 1, defaultMax: 2, overrides: {} },
+        groupBadSlots      : { enabled: false, weight: 0.25, badSlots: {} },
+        groupGoodDays      : { enabled: false, weight: 0.5,  goodDays: {} },
+        courseEmptyDays    : { enabled: false, weight: 1,    emptyDays: {} },
+      };
+    }
     return true;
   } catch (_) {
     return false;
@@ -929,7 +1049,7 @@ function showPage(step) {
 }
 
 function renderProgress(current) {
-  for (let s = 1; s <= 8; s++) {
+  for (let s = 1; s <= 9; s++) {
     const el = document.getElementById('progress-' + s);
     if (!el) continue;
     let html = '<div class="progress-steps">';
@@ -970,7 +1090,8 @@ function goToStep(targetStep, skipValidation = false) {
     const res = document.getElementById('feasibility-result');
     if (res) res.style.display = 'none';
   }
-  if (targetStep === 8) {
+  if (targetStep === 8) renderSoftConstraints();
+  if (targetStep === 9) {
     renderSummary();
     const expName = document.getElementById('export-name');
     if (expName && state.meta.name) expName.value = state.meta.name;
@@ -1431,6 +1552,7 @@ function buildParampack() {
     });
   });
 
+  const soft = buildSoftConstraintsJSON();
   return {
     meta: {
       name        : meta.name || 'config_grade',
@@ -1445,6 +1567,7 @@ function buildParampack() {
     teacher_availability,
     teacher_group_permissions,
     group_course_requirements,
+    ...(soft.length > 0 ? { soft_constraints: soft } : {}),
   };
 }
 
@@ -1576,6 +1699,308 @@ function runFeasibilityCheck() {
 }
 
 // ══════════════════════════════════════════
+// Etapa 8 — Soft Constraints
+// ══════════════════════════════════════════
+
+function renderSoftConstraints() {
+  const sc    = state.softConstraints;
+  const groups  = state.groups;
+  const courses = state.courses.filter(c => c.name).map(c => c.name);
+  const spd     = state.meta.slotsPerDay;
+  const times   = state.meta.turno === 'manha' ? MANHA_TIMES : TARDE_TIMES;
+
+  // Ensure sub-objects exist for current groups/courses
+  groups.forEach(g => {
+    if (!sc.groupBadSlots.badSlots[g]) sc.groupBadSlots.badSlots[g] = [];
+    if (!sc.groupGoodDays.goodDays[g]) sc.groupGoodDays.goodDays[g] = [];
+  });
+  courses.forEach(c => {
+    if (!sc.courseEmptyDays.emptyDays[c]) sc.courseEmptyDays.emptyDays[c] = [];
+  });
+
+  const container = document.getElementById('soft-constraints-list');
+  if (!container) return;
+
+  // ── Card 1: TeacherConsecutiveSessionsConstraint ──
+  const c1config = `
+    <div class="sc-field-row">
+      <label class="sc-field-label">Peso:</label>
+      <input type="number" class="sc-weight-input" min="0.1" max="10" step="0.1"
+        value="${sc.teacherConsecutive.weight}"
+        oninput="state.softConstraints.teacherConsecutive.weight=parseFloat(this.value)||1;saveState()" />
+    </div>`;
+
+  // ── Card 2: CourseGroupMaxPerDayConstraint ──
+  const overrideRows = courses.map(c => {
+    const val = sc.courseMaxPerDay.overrides[c];
+    return `<div class="sc-override-row">
+      <span class="sc-override-course">${escHtml(c)}</span>
+      <input type="number" class="sc-num-input" min="0" max="10"
+        placeholder="${sc.courseMaxPerDay.defaultMax}"
+        value="${val !== undefined ? val : ''}"
+        data-course="${escHtml(c)}"
+        oninput="updateMaxPerDayOverride(this.dataset.course, this.value)" />
+    </div>`;
+  }).join('');
+
+  const c2config = `
+    <div class="sc-field-row" style="margin-bottom:12px">
+      <label class="sc-field-label">Peso:</label>
+      <input type="number" class="sc-weight-input" min="0.1" max="10" step="0.1"
+        value="${sc.courseMaxPerDay.weight}"
+        oninput="state.softConstraints.courseMaxPerDay.weight=parseFloat(this.value)||1;saveState()" />
+    </div>
+    <div class="sc-field-row" style="margin-bottom:12px">
+      <label class="sc-field-label">Máx. padrão/dia:</label>
+      <input type="number" class="sc-num-input" min="1" max="10"
+        value="${sc.courseMaxPerDay.defaultMax}"
+        oninput="state.softConstraints.courseMaxPerDay.defaultMax=parseInt(this.value)||2;saveState()" />
+    </div>
+    ${courses.length > 0
+      ? `<p class="sc-sub-label">Override por disciplina (vazio = padrão):</p>
+         <div class="sc-overrides-list">${overrideRows}</div>`
+      : '<p style="font-size:12px;color:#8898b0">Nenhuma disciplina cadastrada ainda.</p>'}`;
+
+  // ── Card 3: GroupBadSlotsConstraint ──
+  const badSlotRows = groups.map(g => {
+    const bad  = sc.groupBadSlots.badSlots[g] || [];
+    const boxes = Array.from({length: spd}, (_, i) => {
+      const lbl = times[i] ? `${i+1}ª (${times[i]})` : `${i+1}ª aula`;
+      return `<label class="sc-check-label">
+        <input type="checkbox" ${bad.includes(i) ? 'checked' : ''}
+          data-group="${escHtml(g)}" data-slot="${i}"
+          onchange="toggleBadSlot(this.dataset.group,parseInt(this.dataset.slot),this.checked)" />
+        <span>${lbl}</span>
+      </label>`;
+    }).join('');
+    return `<div class="sc-group-row">
+      <span class="sc-group-name">${escHtml(g)}</span>
+      <div class="sc-checkboxes">${boxes}</div>
+    </div>`;
+  }).join('');
+
+  const c3config = `
+    <div class="sc-field-row" style="margin-bottom:12px">
+      <label class="sc-field-label">Peso:</label>
+      <input type="number" class="sc-weight-input" min="0.1" max="10" step="0.1"
+        value="${sc.groupBadSlots.weight}"
+        oninput="state.softConstraints.groupBadSlots.weight=parseFloat(this.value)||0.25;saveState()" />
+    </div>
+    ${groups.length > 0
+      ? `<p class="sc-sub-label">Horários ruins por turma:</p>
+         <div class="sc-groups-config">${badSlotRows}</div>`
+      : '<p style="font-size:12px;color:#8898b0">Nenhuma turma cadastrada ainda.</p>'}`;
+
+  // ── Card 4: GroupEitherGoodDaysConstraint ──
+  const goodDayRows = groups.map(g => {
+    const good  = sc.groupGoodDays.goodDays[g] || [];
+    const boxes = DAYS_SHORT.map((day, i) =>
+      `<label class="sc-check-label">
+        <input type="checkbox" ${good.includes(i) ? 'checked' : ''}
+          data-group="${escHtml(g)}" data-day="${i}"
+          onchange="toggleGoodDay(this.dataset.group,parseInt(this.dataset.day),this.checked)" />
+        <span>${day}</span>
+      </label>`
+    ).join('');
+    return `<div class="sc-group-row">
+      <span class="sc-group-name">${escHtml(g)}</span>
+      <div class="sc-checkboxes">${boxes}</div>
+    </div>`;
+  }).join('');
+
+  const c4config = `
+    <div class="sc-field-row" style="margin-bottom:12px">
+      <label class="sc-field-label">Peso:</label>
+      <input type="number" class="sc-weight-input" min="0.1" max="10" step="0.1"
+        value="${sc.groupGoodDays.weight}"
+        oninput="state.softConstraints.groupGoodDays.weight=parseFloat(this.value)||0.5;saveState()" />
+    </div>
+    ${groups.length > 0
+      ? `<p class="sc-sub-label">Dias preferidos por turma (ao menos um deve ter aula):</p>
+         <div class="sc-groups-config">${goodDayRows}</div>`
+      : '<p style="font-size:12px;color:#8898b0">Nenhuma turma cadastrada ainda.</p>'}`;
+
+  // ── Card 5: CourseEitherEmptyDayConstraint ──
+  const emptyDayRows = courses.map(c => {
+    const empty = sc.courseEmptyDays.emptyDays[c] || [];
+    const boxes = DAYS_SHORT.map((day, i) =>
+      `<label class="sc-check-label">
+        <input type="checkbox" ${empty.includes(i) ? 'checked' : ''}
+          data-course="${escHtml(c)}" data-day="${i}"
+          onchange="toggleEmptyDay(this.dataset.course,parseInt(this.dataset.day),this.checked)" />
+        <span>${day}</span>
+      </label>`
+    ).join('');
+    return `<div class="sc-group-row">
+      <span class="sc-group-name">${escHtml(c)}</span>
+      <div class="sc-checkboxes">${boxes}</div>
+    </div>`;
+  }).join('');
+
+  const c5config = `
+    <div class="sc-field-row" style="margin-bottom:12px">
+      <label class="sc-field-label">Peso:</label>
+      <input type="number" class="sc-weight-input" min="0.1" max="10" step="0.1"
+        value="${sc.courseEmptyDays.weight}"
+        oninput="state.softConstraints.courseEmptyDays.weight=parseFloat(this.value)||1;saveState()" />
+    </div>
+    ${courses.length > 0
+      ? `<p class="sc-sub-label">Dias candidatos a livre por disciplina:</p>
+         <div class="sc-groups-config">${emptyDayRows}</div>`
+      : '<p style="font-size:12px;color:#8898b0">Nenhuma disciplina cadastrada ainda.</p>'}`;
+
+  container.innerHTML = [
+    buildConstraintCard('teacherConsecutive', '👨‍🏫', 'Sessões consecutivas do professor',
+      'Penaliza quando um professor ministra muitas aulas seguidas no mesmo dia.',
+      sc.teacherConsecutive.enabled, c1config),
+    buildConstraintCard('courseMaxPerDay', '📊', 'Máximo de aulas por dia (por disciplina)',
+      'Penaliza quando uma disciplina tem mais aulas do que o máximo configurado no mesmo dia para uma turma.',
+      sc.courseMaxPerDay.enabled, c2config),
+    buildConstraintCard('groupBadSlots', '🚫', 'Horários ruins para turmas',
+      'Penaliza quando uma turma tem aula em horários considerados ruins (ex: último horário do dia).',
+      sc.groupBadSlots.enabled, c3config),
+    buildConstraintCard('groupGoodDays', '📅', 'Dias bons para turmas',
+      'Penaliza se uma turma não tiver aula em pelo menos um dos dias marcados como preferidos.',
+      sc.groupGoodDays.enabled, c4config),
+    buildConstraintCard('courseEmptyDays', '🗓️', 'Dias livres para disciplinas',
+      'Penaliza se uma disciplina não tiver ao menos um dos dias marcados completamente livre.',
+      sc.courseEmptyDays.enabled, c5config),
+  ].join('');
+}
+
+function buildConstraintCard(key, icon, title, desc, enabled, configHtml) {
+  return `<div class="constraint-card ${enabled ? 'constraint-enabled' : ''}">
+    <div class="constraint-header">
+      <div class="constraint-info">
+        <span class="constraint-icon">${icon}</span>
+        <div>
+          <div class="constraint-title">${title}</div>
+          <div class="constraint-desc">${desc}</div>
+        </div>
+      </div>
+      <label class="sc-toggle">
+        <input type="checkbox" ${enabled ? 'checked' : ''}
+          onchange="toggleConstraint('${key}', this.checked)" />
+        <span class="sc-toggle-track"></span>
+      </label>
+    </div>
+    ${enabled ? `<div class="constraint-config">${configHtml}</div>` : ''}
+  </div>`;
+}
+
+function toggleConstraint(key, enabled) {
+  state.softConstraints[key].enabled = enabled;
+  saveState();
+  renderSoftConstraints();
+}
+
+function toggleBadSlot(group, slot, checked) {
+  const sc = state.softConstraints.groupBadSlots;
+  if (!sc.badSlots[group]) sc.badSlots[group] = [];
+  if (checked) { if (!sc.badSlots[group].includes(slot)) sc.badSlots[group].push(slot); }
+  else { sc.badSlots[group] = sc.badSlots[group].filter(s => s !== slot); }
+  saveState();
+}
+
+function toggleGoodDay(group, day, checked) {
+  const sc = state.softConstraints.groupGoodDays;
+  if (!sc.goodDays[group]) sc.goodDays[group] = [];
+  if (checked) { if (!sc.goodDays[group].includes(day)) sc.goodDays[group].push(day); }
+  else { sc.goodDays[group] = sc.goodDays[group].filter(d => d !== day); }
+  saveState();
+}
+
+function toggleEmptyDay(course, day, checked) {
+  const sc = state.softConstraints.courseEmptyDays;
+  if (!sc.emptyDays[course]) sc.emptyDays[course] = [];
+  if (checked) { if (!sc.emptyDays[course].includes(day)) sc.emptyDays[course].push(day); }
+  else { sc.emptyDays[course] = sc.emptyDays[course].filter(d => d !== day); }
+  saveState();
+}
+
+function updateMaxPerDayOverride(course, value) {
+  const v = parseInt(value);
+  if (!value || isNaN(v)) {
+    delete state.softConstraints.courseMaxPerDay.overrides[course];
+  } else {
+    state.softConstraints.courseMaxPerDay.overrides[course] = v;
+  }
+  saveState();
+}
+
+function buildSoftConstraintsJSON() {
+  const sc     = state.softConstraints;
+  const result = [];
+
+  if (sc.teacherConsecutive.enabled) {
+    result.push({
+      type  : 'TeacherConsecutiveSessionsConstraint',
+      name  : 'teacher_consecutive_sessions',
+      weight: sc.teacherConsecutive.weight,
+    });
+  }
+
+  if (sc.courseMaxPerDay.enabled) {
+    const entry = {
+      type               : 'CourseGroupMaxPerDayConstraint',
+      name               : 'max_per_day',
+      weight             : sc.courseMaxPerDay.weight,
+      default_max_per_day: sc.courseMaxPerDay.defaultMax,
+    };
+    const ov = sc.courseMaxPerDay.overrides;
+    if (Object.keys(ov).length > 0) entry.max_per_day_by_course = { ...ov };
+    result.push(entry);
+  }
+
+  if (sc.groupBadSlots.enabled) {
+    const bad = {};
+    Object.entries(sc.groupBadSlots.badSlots).forEach(([g, slots]) => {
+      if (slots.length > 0) bad[g] = slots;
+    });
+    if (Object.keys(bad).length > 0) {
+      result.push({
+        type              : 'GroupBadSlotsConstraint',
+        name              : 'bad_slots_groups',
+        weight            : sc.groupBadSlots.weight,
+        bad_slots_by_group: bad,
+      });
+    }
+  }
+
+  if (sc.groupGoodDays.enabled) {
+    const good = {};
+    Object.entries(sc.groupGoodDays.goodDays).forEach(([g, days]) => {
+      if (days.length > 0) good[g] = days;
+    });
+    if (Object.keys(good).length > 0) {
+      result.push({
+        type                   : 'GroupEitherGoodDaysConstraint',
+        name                   : 'good_days_groups',
+        weight                 : sc.groupGoodDays.weight,
+        candidate_days_by_group: good,
+      });
+    }
+  }
+
+  if (sc.courseEmptyDays.enabled) {
+    const empty = {};
+    Object.entries(sc.courseEmptyDays.emptyDays).forEach(([c, days]) => {
+      if (days.length > 0) empty[c] = days;
+    });
+    if (Object.keys(empty).length > 0) {
+      result.push({
+        type                    : 'CourseEitherEmptyDayConstraint',
+        name                    : 'empty_days_courses',
+        weight                  : sc.courseEmptyDays.weight,
+        candidate_days_by_course: empty,
+      });
+    }
+  }
+
+  return result;
+}
+
+// ══════════════════════════════════════════
 // Utils
 // ══════════════════════════════════════════
 
@@ -1606,7 +2031,8 @@ function escHtml(s) {
     if (state.currentStep === 4) renderCoursesList();
     if (state.currentStep === 5) { populateAvailSelects(); renderAvailGrid(); }
     if (state.currentStep === 6) renderQtyTable();
-    if (state.currentStep === 7) renderSummary();
+    if (state.currentStep === 8) renderSoftConstraints();
+    if (state.currentStep === 9) renderSummary();
   } else {
     renderGroupChips();
     renderTeacherChips();

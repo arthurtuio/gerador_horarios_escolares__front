@@ -404,7 +404,9 @@
 // ══════════════════════════════════════════
 // Config — preencha com a URL do Modal após deploy
 // ══════════════════════════════════════════
-const GA_ENDPOINT = '';   // ex: 'https://arthur-antonia--gerador-horarios-run-ga.modal.run'
+// Preencha com a URL do Modal após fazer: modal deploy backend/main.py
+// A URL tem formato: https://<usuario>--gerador-horarios-submit-job.modal.run
+const GA_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-submit-job.modal.run';
 
 // ══════════════════════════════════════════
 // State
@@ -534,12 +536,14 @@ async function submitJob() {
       body   : JSON.stringify(payload),
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Servidor retornou ${res.status}: ${text}`);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || data.status === 'error') {
+      const errs = data.errors ? data.errors.join('\n• ') : `Status ${res.status}`;
+      throw new Error('Erros de validação:\n• ' + errs);
     }
 
-    showStatusCard(email);
+    showStatusCard(email, data.job_id || '');
   } catch (err) {
     showError(`Erro ao enviar: ${err.message}`);
     btn.disabled = false;
@@ -547,11 +551,17 @@ async function submitJob() {
   }
 }
 
-function showStatusCard(email) {
+function showStatusCard(email, jobId) {
   document.getElementById('form-section').style.display = 'none';
   const card = document.getElementById('status-card');
   card.classList.add('show');
   document.getElementById('status-email').textContent = email;
+  if (jobId) {
+    const sub = card.querySelector('.status-sub');
+    if (sub) sub.insertAdjacentHTML('beforeend',
+      `<br><span style="font-size:11px;color:#8898b0;margin-top:4px;display:inline-block">Job ID: ${jobId}</span>`
+    );
+  }
 }
 
 function resetForm() {
