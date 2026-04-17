@@ -269,6 +269,29 @@
     }
     .btn-new-job:hover { border-color: #1a6fc4; background: #f0f6ff; }
 
+    /* ── Preset cards ── */
+    .preset-grid {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .preset-card {
+      flex: 1;
+      border: 2px solid #dde3ed;
+      border-radius: 10px;
+      padding: 14px 12px;
+      cursor: pointer;
+      background: #fff;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+    .preset-card:hover { border-color: #1a6fc4; background: #f5f9ff; }
+    .preset-card.selected { border-color: #1a6fc4; background: #eaf2ff; }
+    .preset-icon { font-size: 24px; margin-bottom: 6px; }
+    .preset-name { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .preset-detail { font-size: 11px; color: #6b7a99; margin-top: 4px; line-height: 1.5; }
+    .preset-card.selected .preset-name { color: #1a6fc4; }
+
     /* ── Config notice ── */
     .config-notice {
       background: #fffde7;
@@ -353,9 +376,28 @@
         <p class="form-hint">Você receberá o CSV gerado pelo GA como anexo neste email.</p>
       </div>
 
+      <p class="section-label" style="margin-top:24px">3. Velocidade de execução</p>
+      <div class="preset-grid">
+        <div class="preset-card" id="preset-rapido" onclick="selectPreset('rapido')">
+          <div class="preset-icon">⚡</div>
+          <div class="preset-name">Rápido</div>
+          <div class="preset-detail">Pop. 20 · 30 gerações<br>~1–2 min</div>
+        </div>
+        <div class="preset-card selected" id="preset-medio" onclick="selectPreset('medio')">
+          <div class="preset-icon">⚖️</div>
+          <div class="preset-name">Médio</div>
+          <div class="preset-detail">Pop. 50 · 100 gerações<br>~5–10 min</div>
+        </div>
+        <div class="preset-card" id="preset-demorado" onclick="selectPreset('demorado')">
+          <div class="preset-icon">🔬</div>
+          <div class="preset-name">Demorado</div>
+          <div class="preset-detail">Pop. 100 · 200 gerações<br>~20–30 min</div>
+        </div>
+      </div>
+
       <div id="error-banner" class="error-banner"></div>
 
-      <p class="section-label">3. Executar</p>
+      <p class="section-label">4. Executar</p>
       <button class="btn-execute" id="btn-execute" onclick="submitJob()" disabled>
         <span>🚀</span> Enviar para processamento
       </button>
@@ -430,6 +472,7 @@ const GA_STATUS_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-get-s
 let currentFile      = null;
 let currentParsed    = null;
 let pollingInterval  = null;
+let selectedPreset   = 'medio';
 
 // ══════════════════════════════════════════
 // Init
@@ -546,7 +589,7 @@ async function submitJob() {
   btn.innerHTML = '<span style="animation:pulse 1s infinite">⏳</span> Enviando…';
 
   try {
-    const payload = { parampack: currentParsed, email };
+    const payload = { parampack: currentParsed, email, preset: selectedPreset };
     const res = await fetch(GA_ENDPOINT, {
       method : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -584,6 +627,7 @@ function showStatusCard(email, jobId) {
 
 function resetForm() {
   if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+  selectPreset('medio');
   currentFile   = null;
   currentParsed = null;
   document.getElementById('form-section').style.display = '';
@@ -661,6 +705,16 @@ function showDoneUI(data) {
   document.getElementById('progress-bar').style.width      = '100%';
   document.getElementById('progress-bar').style.background = '#27ae60';
   document.getElementById('progress-eta-label').textContent = 'Concluído!';
+}
+
+// ══════════════════════════════════════════
+// Preset selection
+// ══════════════════════════════════════════
+function selectPreset(key) {
+  selectedPreset = key;
+  ['rapido', 'medio', 'demorado'].forEach(k => {
+    document.getElementById('preset-' + k).classList.toggle('selected', k === key);
+  });
 }
 
 // ══════════════════════════════════════════
