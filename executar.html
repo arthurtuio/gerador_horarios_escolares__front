@@ -389,6 +389,18 @@
         </div>
       </div>
 
+      <!-- ── Barra de progresso ── -->
+      <div id="progress-section" style="display:none; margin: 20px 0; text-align:left">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:#6b7a99; margin-bottom:6px">
+          <span id="progress-gen-label">Aguardando início…</span>
+          <span id="progress-eta-label"></span>
+        </div>
+        <div style="background:#e8edf5; border-radius:8px; height:10px; overflow:hidden">
+          <div id="progress-bar" style="background:#1a6fc4; height:100%; width:0%; transition:width 0.5s ease; border-radius:8px"></div>
+        </div>
+        <div style="font-size:11px; color:#8898b0; margin-top:6px" id="progress-score-label"></div>
+      </div>
+
       <div class="status-sub" style="margin-top:4px">
         Quando terminar, abra o CSV recebido no<br>
         <a href="index.html" style="color:#1a6fc4;font-weight:600">visualizador de grades →</a>
@@ -408,11 +420,16 @@
 // A URL tem formato: https://<usuario>--gerador-horarios-submit-job.modal.run
 const GA_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-submit-job.modal.run';
 
+// URL do endpoint de status — atualizar após deploy (gerada automaticamente pelo Modal)
+// Formato: https://<usuario>--gerador-horarios-get-status.modal.run
+const GA_STATUS_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-get-status.modal.run';
+
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-let currentFile   = null;
-let currentParsed = null;
+let currentFile      = null;
+let currentParsed    = null;
+let pollingInterval  = null;
 
 // ══════════════════════════════════════════
 // Init
@@ -561,10 +578,12 @@ function showStatusCard(email, jobId) {
     if (sub) sub.insertAdjacentHTML('beforeend',
       `<br><span style="font-size:11px;color:#8898b0;margin-top:4px;display:inline-block">Job ID: ${jobId}</span>`
     );
+    if (GA_STATUS_ENDPOINT) startPolling(jobId);
   }
 }
 
 function resetForm() {
+  if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
   currentFile   = null;
   currentParsed = null;
   document.getElementById('form-section').style.display = '';
@@ -576,7 +595,72 @@ function resetForm() {
   document.getElementById('email-input').value = '';
   document.getElementById('btn-execute').disabled = true;
   document.getElementById('btn-execute').innerHTML = '<span>🚀</span> Enviar para processamento';
+  // Reset progress bar state
+  document.getElementById('progress-section').style.display = 'none';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('progress-bar').style.background = '#1a6fc4';
+  document.getElementById('progress-gen-label').textContent = 'Aguardando início…';
+  document.getElementById('progress-eta-label').textContent = '';
+  document.getElementById('progress-score-label').textContent = '';
+  // Reset status card icons/titles
+  document.querySelector('#status-card .status-icon').textContent = '⏳';
+  document.querySelector('#status-card .status-title').textContent = 'Job enviado com sucesso!';
+  const dots = document.querySelectorAll('#status-card .step-dot');
+  dots[1].className = 'step-dot spin'; dots[1].textContent = '▶';
+  dots[2].className = 'step-dot wait'; dots[2].textContent = '3';
   hideError();
+}
+
+// ══════════════════════════════════════════
+// Polling de progresso
+// ══════════════════════════════════════════
+function startPolling(jobId) {
+  pollingInterval = setInterval(() => pollStatus(jobId), 5000);
+}
+
+async function pollStatus(jobId) {
+  try {
+    const res  = await fetch(`${GA_STATUS_ENDPOINT}?job_id=${jobId}`);
+    const data = await res.json();
+    updateProgressUI(data);
+    if (data.status === 'done' || data.status === 'error') {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+      if (data.status === 'done') showDoneUI(data);
+    }
+  } catch (_) { /* silencioso — tenta de novo no próximo ciclo */ }
+}
+
+function updateProgressUI(data) {
+  if (data.status === 'pending') return;
+  document.getElementById('progress-section').style.display = 'block';
+
+  const pct = data.total_generations
+    ? Math.round((data.generation + 1) / data.total_generations * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-gen-label').textContent =
+    `Geração ${data.generation + 1} / ${data.total_generations}`;
+
+  if (data.estimated_remaining_sec != null) {
+    const mins = Math.ceil(data.estimated_remaining_sec / 60);
+    document.getElementById('progress-eta-label').textContent =
+      mins > 0 ? `~${mins} min restantes` : 'quase lá…';
+  }
+  if (data.best_score != null) {
+    document.getElementById('progress-score-label').textContent =
+      `Melhor score: ${data.best_score.toFixed(4)}`;
+  }
+}
+
+function showDoneUI(data) {
+  document.querySelector('#status-card .status-icon').textContent  = '✅';
+  document.querySelector('#status-card .status-title').textContent = 'Grade gerada! Email a caminho.';
+  const dots = document.querySelectorAll('#status-card .step-dot');
+  dots[1].className = 'step-dot done'; dots[1].textContent = '✓';
+  dots[2].className = 'step-dot done'; dots[2].textContent = '✓';
+  document.getElementById('progress-bar').style.width      = '100%';
+  document.getElementById('progress-bar').style.background = '#27ae60';
+  document.getElementById('progress-eta-label').textContent = 'Concluído!';
 }
 
 // ══════════════════════════════════════════
