@@ -1561,9 +1561,16 @@ function buildParampack() {
     },
     groups,
     teachers,
-    courses: courses
-      .filter(c => c.name && c.teacher)
-      .map(c => ({ course_name: c.name, teacher_names: [c.teacher] })),
+    courses: Object.values(
+      courses
+        .filter(c => c.name && c.teacher)
+        .reduce((acc, c) => {
+          if (!acc[c.name]) acc[c.name] = { course_name: c.name, teacher_names: [] };
+          if (!acc[c.name].teacher_names.includes(c.teacher))
+            acc[c.name].teacher_names.push(c.teacher);
+          return acc;
+        }, {})
+    ),
     teacher_availability,
     teacher_group_permissions,
     group_course_requirements,
