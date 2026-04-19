@@ -679,6 +679,15 @@ function updateProgressUI(data) {
   if (data.status === 'pending') return;
   document.getElementById('progress-section').style.display = 'block';
 
+  // generation = -1 → ainda construindo a população inicial
+  if (data.generation == null || data.generation < 0) {
+    document.getElementById('progress-gen-label').textContent = 'Iniciando execução…';
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-eta-label').textContent = '';
+    document.getElementById('progress-score-label').textContent = '';
+    return;
+  }
+
   const pct = data.total_generations
     ? Math.round((data.generation + 1) / data.total_generations * 100) : 0;
   document.getElementById('progress-bar').style.width = pct + '%';
