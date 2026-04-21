@@ -630,7 +630,7 @@
         <label class="form-label" for="meta-name">Nome da grade de horários</label>
         <input type="text" id="meta-name" class="text-input" style="max-width:380px"
                placeholder="ex: jan26_matutino" oninput="saveState()" />
-        <p class="form-hint">Usado como nome do arquivo JSON exportado.</p>
+        <p class="form-hint">Usado como nome do arquivo de parâmetros ao baixar.</p>
       </div>
 
       <div class="form-group">
@@ -882,16 +882,16 @@
       <p class="section-label">Resumo</p>
       <div class="summary-grid" id="summary-grid"></div>
 
-      <p class="section-label">Exportar JSON</p>
+      <p class="section-label">Exportar configuração</p>
       <div class="export-card">
         <div class="form-group">
           <label class="form-label">Nome do arquivo</label>
           <div class="export-filename-row">
-            <input type="text" id="export-name" class="text-input" placeholder="config_grade" />
+            <input type="text" id="export-name" class="text-input" placeholder="minha_grade" />
             <span class="filename-ext">.json</span>
           </div>
         </div>
-        <button class="btn-export" onclick="exportJSON()">⬇ Baixar config_grade.json</button>
+        <button class="btn-export" onclick="exportJSON()">⬇ Baixar arquivo de parâmetros</button>
         <div id="export-success" class="success-banner">✅ Arquivo baixado!</div>
       </div>
     </div>
@@ -1116,7 +1116,7 @@ function validateStep(step) {
   showValidation(step, '');
   if (step === 1) {
     if (!state.meta.name) {
-      showValidation(1, 'Informe um nome para a config_grade antes de continuar.');
+      showValidation(1, 'Informe um nome para a configuração antes de continuar.');
       return false;
     }
   }

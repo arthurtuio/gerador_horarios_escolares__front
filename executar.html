@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Executar GA — Horários Escolares</title>
+  <title>Gerar Grade — Horários Escolares</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -323,40 +323,40 @@
       <span class="nav-icon">⚙️</span> Criar parâmetros
     </a>
     <a class="nav-item active" href="executar.html">
-      <span class="nav-icon">🚀</span> Executar GA
+      <span class="nav-icon">🚀</span> Gerar Grade
     </a>
     <a class="nav-item" href="visualizar_grade.html">
       <span class="nav-icon">📊</span> Ver grade gerada
     </a>
   </nav>
   <div class="sidebar-footer">
-    Algoritmo Genético<br>para geração de horários
+    Gerador de horários<br>para escolas
   </div>
 </aside>
 
 <!-- ══ MAIN ══ -->
 <main id="main">
   <div class="topbar">
-    <h1>🚀 Executar Algoritmo Genético</h1>
+    <h1>🚀 Gerar Grade</h1>
   </div>
 
   <div class="content">
 
     <div id="config-notice" class="config-notice">
-      ⚠️ <strong>Endpoint não configurado.</strong>
-      Edite a variável <code>GA_ENDPOINT</code> no início do script com a URL do Modal.
+      ⚠️ <strong>Serviço indisponível.</strong>
+      Contacte o administrador do sistema.
     </div>
 
     <!-- ── Formulário de envio ── -->
     <div id="form-section">
 
-      <p class="section-label">1. Configurações da Grade</p>
+      <p class="section-label">1. Arquivo de parâmetros da grade</p>
       <div class="upload-area" id="upload-area">
         <input type="file" accept=".json" id="file-input" onchange="handleFile(this.files[0])" />
         <div class="upload-icon">📦</div>
-        <h3>Arraste seu arquivo de configurações da Grade (formato .json) aqui</h3>
+        <h3>Arraste aqui o arquivo de parâmetros da grade</h3>
         <p>ou clique para selecionar</p>
-        <span class="ext-tag">JSON — gerado pelo wizard de parâmetros</span>
+        <span class="ext-tag">Gerado pelo criador de parâmetros</span>
       </div>
       <div id="file-banner" style="display:none" class="file-banner">
         <span>✅</span>
@@ -373,7 +373,7 @@
         <input type="email" id="email-input" class="text-input"
                placeholder="seu@email.com"
                style="max-width:380px" />
-        <p class="form-hint">Você receberá o CSV gerado pelo GA como anexo neste email.</p>
+        <p class="form-hint">Você receberá o arquivo de horários gerado por email.</p>
       </div>
 
       <p class="section-label" style="margin-top:24px">3. Velocidade de execução</p>
@@ -397,12 +397,12 @@
 
       <div id="error-banner" class="error-banner"></div>
 
-      <p class="section-label">4. Executar</p>
+      <p class="section-label">4. Gerar</p>
       <button class="btn-execute" id="btn-execute" onclick="submitJob()" disabled>
-        <span>🚀</span> Enviar para processamento
+        <span>🚀</span> Gerar grade de horários
       </button>
       <p class="form-hint" style="margin-top:10px;text-align:center">
-        O algoritmo pode levar mais de 10 minutos. Você será avisado por email ao terminar.
+        O processamento pode levar alguns minutos. Você será avisado por email ao terminar.
       </p>
 
     </div>
@@ -410,31 +410,31 @@
     <!-- ── Status pós-envio ── -->
     <div id="status-card" class="status-card">
       <div class="status-icon">⏳</div>
-      <div class="status-title">Job enviado com sucesso!</div>
+      <div class="status-title">Processamento iniciado!</div>
       <div class="status-sub">
-        O algoritmo genético está rodando.<br>
-        Você receberá o CSV no email <span class="status-email" id="status-email"></span>
+        Sua grade está sendo calculada.<br>
+        Você receberá o resultado no email <span class="status-email" id="status-email"></span>
       </div>
 
       <div class="status-steps">
         <div class="status-step">
           <div class="step-dot done">✓</div>
-          Configs Grade recebido pelo servidor
+          Parâmetros recebidos
         </div>
         <div class="status-step">
           <div class="step-dot spin">▶</div>
-          Executando algoritmo genético…
+          Calculando grade de horários…
         </div>
         <div class="status-step">
           <div class="step-dot wait">3</div>
-          Enviando CSV por email
+          Enviando resultado por email
         </div>
       </div>
 
       <!-- ── Barra de progresso ── -->
       <div id="progress-section" style="display:none; margin: 20px 0; text-align:left">
         <div style="display:flex; justify-content:space-between; font-size:12px; color:#6b7a99; margin-bottom:6px">
-          <span id="progress-gen-label">Aguardando início…</span>
+          <span id="progress-gen-label">Aguardando início do cálculo…</span>
           <span id="progress-eta-label"></span>
         </div>
         <div style="background:#e8edf5; border-radius:8px; height:10px; overflow:hidden">
@@ -444,11 +444,11 @@
       </div>
 
       <div class="status-sub" style="margin-top:4px">
-        Quando terminar, abra o CSV recebido no<br>
+        Quando terminar, abra o arquivo recebido no<br>
         <a href="index.html" style="color:#1a6fc4;font-weight:600">visualizador de grades →</a>
       </div>
 
-      <button class="btn-new-job" onclick="resetForm()">+ Enviar outro job</button>
+      <button class="btn-new-job" onclick="resetForm()">+ Gerar outra grade</button>
     </div>
 
   </div>
@@ -502,7 +502,7 @@ let selectedPreset   = 'medio';
 // ══════════════════════════════════════════
 function handleFile(file) {
   if (!file || !file.name.endsWith('.json')) {
-    showError('Selecione um arquivo .json (gerado pelo wizard de parâmetros).');
+    showError('Selecione um arquivo .json gerado pelo criador de parâmetros.');
     return;
   }
 
@@ -511,7 +511,7 @@ function handleFile(file) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed.groups || !parsed.teachers || !parsed.courses) {
-        showError('JSON inválido — não parece um config_grade. Verifique o arquivo.');
+        showError('Arquivo inválido — não parece um arquivo de parâmetros. Verifique o arquivo.');
         return;
       }
       currentFile   = file;
@@ -619,7 +619,7 @@ function showStatusCard(email, jobId) {
   if (jobId) {
     const sub = card.querySelector('.status-sub');
     if (sub) sub.insertAdjacentHTML('beforeend',
-      `<br><span style="font-size:11px;color:#8898b0;margin-top:4px;display:inline-block">Job ID: ${jobId}</span>`
+      `<br><span style="font-size:11px;color:#8898b0;margin-top:4px;display:inline-block">Código: ${jobId}</span>`
     );
     if (GA_STATUS_ENDPOINT) startPolling(jobId);
   }
@@ -643,12 +643,12 @@ function resetForm() {
   document.getElementById('progress-section').style.display = 'none';
   document.getElementById('progress-bar').style.width = '0%';
   document.getElementById('progress-bar').style.background = '#1a6fc4';
-  document.getElementById('progress-gen-label').textContent = 'Aguardando início…';
+  document.getElementById('progress-gen-label').textContent = 'Aguardando início do cálculo…';
   document.getElementById('progress-eta-label').textContent = '';
   document.getElementById('progress-score-label').textContent = '';
   // Reset status card icons/titles
   document.querySelector('#status-card .status-icon').textContent = '⏳';
-  document.querySelector('#status-card .status-title').textContent = 'Job enviado com sucesso!';
+  document.querySelector('#status-card .status-title').textContent = 'Processamento iniciado!';
   const dots = document.querySelectorAll('#status-card .step-dot');
   dots[1].className = 'step-dot spin'; dots[1].textContent = '▶';
   dots[2].className = 'step-dot wait'; dots[2].textContent = '3';
@@ -681,7 +681,7 @@ function updateProgressUI(data) {
 
   // generation = -1 → ainda construindo a população inicial
   if (data.generation == null || data.generation < 0) {
-    document.getElementById('progress-gen-label').textContent = 'Iniciando execução…';
+    document.getElementById('progress-gen-label').textContent = 'Iniciando cálculo…';
     document.getElementById('progress-bar').style.width = '0%';
     document.getElementById('progress-eta-label').textContent = '';
     document.getElementById('progress-score-label').textContent = '';
@@ -701,13 +701,13 @@ function updateProgressUI(data) {
   }
   if (data.best_score != null) {
     document.getElementById('progress-score-label').textContent =
-      `Melhor score: ${data.best_score.toFixed(4)}`;
+      `Qualidade da solução: ${data.best_score.toFixed(4)}`;
   }
 }
 
 function showDoneUI(data) {
   document.querySelector('#status-card .status-icon').textContent  = '✅';
-  document.querySelector('#status-card .status-title').textContent = 'Grade gerada! Email a caminho.';
+  document.querySelector('#status-card .status-title').textContent = 'Grade pronta! Email a caminho.';
   const dots = document.querySelectorAll('#status-card .step-dot');
   dots[1].className = 'step-dot done'; dots[1].textContent = '✓';
   dots[2].className = 'step-dot done'; dots[2].textContent = '✓';
