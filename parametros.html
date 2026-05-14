@@ -837,6 +837,13 @@
         <div class="feasibility-table-wrapper">
           <table class="feasibility-table" id="feasibility-table-2"></table>
         </div>
+
+        <div id="feasibility-check3-wrapper" style="display:none;margin-top:24px">
+          <p class="section-label">Check 3 — Professores por horário (pombo-ninho)</p>
+          <div class="feasibility-table-wrapper">
+            <table class="feasibility-table" id="feasibility-table-3"></table>
+          </div>
+        </div>
       </div>
     </div>
     <div class="step-footer">
@@ -1652,16 +1659,74 @@ function checkTeacherGroupCoverage() {
   return { rows, anyFail: rows.some(r => !r.ok) };
 }
 
+/**
+ * Check 3: pombo-ninho — cada timeslot precisa ter pelo menos
+ * N professores disponíveis (N = nº de turmas com grade cheia).
+ * Se uma turma tem 25 sessões, ela ocupa todos os 25 slots,
+ * então cada slot precisa de 1 professor pra ela.
+ * Returns { rows: [{slot, day, slotInDay, available, needed, names, ok}], anyFail }
+ */
+function checkPigeonhole() {
+  const { teachers, groups, availability, weeklyQty, meta } = state;
+  const slotsPerDay = meta.slotsPerDay;
+  const total = slotsPerDay * 5;
+
+  // Conta sessões por turma
+  const sessionsPerGroup = {};
+  groups.forEach(g => {
+    sessionsPerGroup[g] = teachers.reduce((s, t) => s + (weeklyQty[t]?.[g] || 0), 0);
+  });
+
+  // Turmas que usam todos os slots (sessões >= total)
+  const fullGroups = groups.filter(g => sessionsPerGroup[g] >= total);
+  if (fullGroups.length === 0) return { rows: [], anyFail: false };
+
+  const needed = fullGroups.length;
+  const rows = [];
+
+  for (let ts = 0; ts < total; ts++) {
+    const day = Math.floor(ts / slotsPerDay);
+    const slotInDay = ts % slotsPerDay;
+
+    // Professores disponíveis nesse slot
+    const names = teachers.filter(t => {
+      const arr = availability[t];
+      if (!arr) return true; // sem restrição = disponível em tudo
+      return arr[ts] !== false;
+    });
+
+    const ok = names.length >= needed;
+    if (!ok) {
+      rows.push({
+        slot: ts,
+        day: DAYS_SHORT[day],
+        slotInDay: slotInDay + 1,
+        available: names.length,
+        needed,
+        names,
+        ok,
+      });
+    }
+  }
+
+  return { rows, anyFail: rows.some(r => !r.ok) };
+}
+
 function runFeasibilityCheck() {
   const check1 = checkTeacherDemand();
   const check2 = checkTeacherGroupCoverage();
-  const anyFail = check1.anyFail || check2.anyFail;
+  const check3 = checkPigeonhole();
+  const anyFail = check1.anyFail || check2.anyFail || check3.anyFail;
 
   // Banner
   const banner = document.getElementById('feasibility-banner');
-  banner.innerHTML = anyFail
-    ? '<div class="feas-banner-fail">❌ Existem conflitos de disponibilidade. Corrija antes de exportar!</div>'
-    : '<div class="feas-banner-ok">🎉 Todas as demandas são atendidas pela disponibilidade! A grade é viável.</div>';
+  if (check3.anyFail) {
+    banner.innerHTML = '<div class="feas-banner-fail">❌ Há horários com menos professores do que turmas. A grade é impossível!</div>';
+  } else if (anyFail) {
+    banner.innerHTML = '<div class="feas-banner-fail">❌ Existem conflitos de disponibilidade. Corrija antes de exportar!</div>';
+  } else {
+    banner.innerHTML = '<div class="feas-banner-ok">🎉 Todas as demandas são atendidas pela disponibilidade! A grade é viável.</div>';
+  }
 
   // Table 1
   const t1 = document.getElementById('feasibility-table-1');
@@ -1700,6 +1765,28 @@ function runFeasibilityCheck() {
           <td class="${r.ok ? 'feas-ok' : 'feas-fail'}">${r.ok ? '✅ OK' : '❌ IMPOSSÍVEL'}</td>
         </tr>`).join('')}
       </tbody>`;
+  }
+
+  // Table 3 — pombo-ninho
+  const c3wrapper = document.getElementById('feasibility-check3-wrapper');
+  if (check3.rows.length > 0) {
+    c3wrapper.style.display = 'block';
+    const t3 = document.getElementById('feasibility-table-3');
+    t3.innerHTML = `
+      <thead><tr>
+        <th>Horário</th><th>Professores disponíveis</th>
+        <th>Turmas que precisam</th><th>Status</th>
+      </tr></thead>
+      <tbody>${check3.rows.map(r => `
+        <tr>
+          <td>${escHtml(r.day)} aula ${r.slotInDay}</td>
+          <td style="text-align:center">${r.available} (${r.names.map(n => escHtml(n)).join(', ')})</td>
+          <td style="text-align:center">${r.needed}</td>
+          <td class="feas-fail">❌ IMPOSSÍVEL</td>
+        </tr>`).join('')}
+      </tbody>`;
+  } else {
+    c3wrapper.style.display = 'none';
   }
 
   document.getElementById('feasibility-result').style.display = 'block';
