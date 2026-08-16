@@ -468,6 +468,18 @@
         <div style="font-size:11px; color:#8898b0; margin-top:6px" id="progress-score-label"></div>
       </div>
 
+      <!-- ── Download direto (aparece quando o CSV fica pronto) ── -->
+      <div id="download-section" style="display:none; margin:20px 0">
+        <a id="download-link" href="#" style="
+          display:inline-block; background:#27ae60; color:#fff;
+          padding:12px 24px; border-radius:8px; text-decoration:none;
+          font-weight:600; font-size:15px
+        ">⬇️ Baixar CSV da grade</a>
+        <div style="font-size:11px; color:#8898b0; margin-top:8px">
+          O link fica disponível por 7 dias. O email com o anexo também está a caminho.
+        </div>
+      </div>
+
       <div class="status-sub" style="margin-top:4px">
         Quando terminar, abra o arquivo recebido no<br>
         <a href="index.html" style="color:#1a6fc4;font-weight:600">visualizador de grades →</a>
@@ -491,6 +503,9 @@ const GA_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-submit-job.m
 // Formato: https://<usuario>--gerador-horarios-get-status.modal.run
 const GA_STATUS_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-get-status.modal.run';
 
+// Download direto do CSV. É um link de navegação (não fetch), então não passa por CORS.
+const GA_RESULT_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-get-result.modal.run';
+
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
@@ -498,6 +513,8 @@ let currentFile      = null;
 let currentParsed    = null;
 let pollingInterval  = null;
 let selectedPreset   = 'medio';
+let currentJobId     = null;   // usado pra montar o link de download no fim
+let statusSubOriginalHTML = null;  // texto original do card, pra restaurar entre rodadas
 
 // ══════════════════════════════════════════
 // Init
@@ -642,9 +659,17 @@ async function submitJob() {
 }
 
 function showStatusCard(email, jobId) {
+  currentJobId = jobId || null;
   document.getElementById('form-section').style.display = 'none';
   const card = document.getElementById('status-card');
   card.classList.add('show');
+
+  // Restaura o texto original: sem isso, o "Código:" da rodada anterior fica
+  // acumulado no card a cada nova grade gerada.
+  const subEl = card.querySelector('.status-sub');
+  if (statusSubOriginalHTML === null) statusSubOriginalHTML = subEl.innerHTML;
+  else subEl.innerHTML = statusSubOriginalHTML;
+
   document.getElementById('status-email').textContent = email;
   if (jobId) {
     const sub = card.querySelector('.status-sub');
@@ -660,6 +685,11 @@ function resetForm() {
   selectPreset('medio');
   currentFile   = null;
   currentParsed = null;
+  currentJobId  = null;
+  // Esconde o download da grade anterior — senão o botão da rodada passada
+  // fica visível apontando pro CSV errado.
+  document.getElementById('download-section').style.display = 'none';
+  document.getElementById('download-link').removeAttribute('download');
   document.getElementById('form-section').style.display = '';
   document.getElementById('status-card').classList.remove('show');
   document.getElementById('upload-area').style.display = '';
@@ -737,13 +767,36 @@ function updateProgressUI(data) {
 
 function showDoneUI(data) {
   document.querySelector('#status-card .status-icon').textContent  = '✅';
-  document.querySelector('#status-card .status-title').textContent = 'Grade pronta! Email a caminho.';
+  document.querySelector('#status-card .status-title').textContent = 'Grade pronta!';
   const dots = document.querySelectorAll('#status-card .step-dot');
   dots[1].className = 'step-dot done'; dots[1].textContent = '✓';
   dots[2].className = 'step-dot done'; dots[2].textContent = '✓';
   document.getElementById('progress-bar').style.width      = '100%';
   document.getElementById('progress-bar').style.background = '#27ae60';
   document.getElementById('progress-eta-label').textContent = 'Concluído!';
+
+  // O texto do card ainda é o de "calculando" — atualiza pro estado final,
+  // preservando o email e o código do job.
+  const sub = document.querySelector('#status-card .status-sub');
+  if (sub) {
+    const emailTxt = (document.getElementById('status-email') || {}).textContent || '';
+    sub.innerHTML =
+      'Sua grade ficou pronta.<br>' +
+      'Também enviamos por email para ' +
+      `<span class="status-email" id="status-email">${escHtml(emailTxt)}</span>` +
+      (currentJobId
+        ? `<br><span style="font-size:11px;color:#8898b0;margin-top:4px;display:inline-block">Código: ${escHtml(currentJobId)}</span>`
+        : '');
+  }
+
+  // Download direto. Se o backend não conseguiu publicar o CSV (has_result
+  // false), o email com anexo continua sendo o caminho — não mostra o botão.
+  if (data.has_result && currentJobId) {
+    const link = document.getElementById('download-link');
+    link.href = `${GA_RESULT_ENDPOINT}?job_id=${encodeURIComponent(currentJobId)}`;
+    if (data.csv_filename) link.setAttribute('download', data.csv_filename);
+    document.getElementById('download-section').style.display = 'block';
+  }
 }
 
 // ══════════════════════════════════════════
