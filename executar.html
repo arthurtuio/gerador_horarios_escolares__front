@@ -253,7 +253,6 @@
     .status-icon { font-size: 52px; margin-bottom: 12px; }
     .status-title { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
     .status-sub { font-size: 13px; color: #6b7a99; line-height: 1.6; }
-    .status-email { font-weight: 700; color: #1a6fc4; }
 
     .status-steps {
       display: flex;
@@ -393,15 +392,7 @@
       </div>
       <div id="preview-grid" class="preview-grid"></div>
 
-      <p class="section-label" style="margin-top:24px">2. Email para receber o resultado</p>
-      <div class="form-group">
-        <input type="email" id="email-input" class="text-input"
-               placeholder="seu@email.com"
-               style="max-width:380px" />
-        <p class="form-hint">Você receberá o arquivo de horários gerado por email.</p>
-      </div>
-
-      <p class="section-label" style="margin-top:24px">3. Velocidade de execução</p>
+      <p class="section-label" style="margin-top:24px">2. Velocidade de execução</p>
       <div class="preset-grid">
         <div class="preset-card" id="preset-rapido" onclick="selectPreset('rapido')">
           <div class="preset-icon">⚡</div>
@@ -422,12 +413,13 @@
 
       <div id="error-banner" class="error-banner"></div>
 
-      <p class="section-label">4. Gerar</p>
+      <p class="section-label">3. Gerar</p>
       <button class="btn-execute" id="btn-execute" onclick="submitJob()" disabled>
         <span>🚀</span> Gerar grade de horários
       </button>
       <p class="form-hint" style="margin-top:10px;text-align:center">
-        O processamento pode levar alguns minutos. Você será avisado por email ao terminar.
+        O processamento pode levar alguns minutos. Mantenha esta aba aberta —
+        o download aparece aqui quando terminar.
       </p>
 
     </div>
@@ -438,7 +430,8 @@
       <div class="status-title">Processamento iniciado!</div>
       <div class="status-sub">
         Sua grade está sendo calculada.<br>
-        Você receberá o resultado no email <span class="status-email" id="status-email"></span>
+        O botão de download aparece aqui quando terminar.
+        <strong>Mantenha esta aba aberta.</strong>
       </div>
 
       <div class="status-steps">
@@ -452,7 +445,7 @@
         </div>
         <div class="status-step">
           <div class="step-dot wait">3</div>
-          Enviando resultado por email
+          Preparando arquivo para download
         </div>
       </div>
 
@@ -475,8 +468,8 @@
           padding:12px 24px; border-radius:8px; text-decoration:none;
           font-weight:600; font-size:15px
         ">⬇️ Baixar CSV da grade</a>
-        <div style="font-size:11px; color:#8898b0; margin-top:8px">
-          O link fica disponível por 7 dias. O email com o anexo também está a caminho.
+        <div id="download-hint" style="font-size:11px; color:#8898b0; margin-top:8px">
+          O link fica disponível por 7 dias.
         </div>
       </div>
 
@@ -535,8 +528,6 @@ let statusSubOriginalHTML = null;  // texto original do card, pra restaurar entr
     if (file) handleFile(file);
   });
 
-  // Enable button when both file + email are set
-  document.getElementById('email-input').addEventListener('input', updateSubmitState);
 })();
 
 // ══════════════════════════════════════════
@@ -608,16 +599,12 @@ function clearFile() {
 // Submit
 // ══════════════════════════════════════════
 function updateSubmitState() {
-  const email = document.getElementById('email-input').value.trim();
-  const valid = currentFile !== null && isValidEmail(email);
-  document.getElementById('btn-execute').disabled = !valid;
+  document.getElementById('btn-execute').disabled = (currentFile === null);
 }
 
 async function submitJob() {
-  const email = document.getElementById('email-input').value.trim();
-
-  if (!currentParsed || !isValidEmail(email)) {
-    showError('Preencha todos os campos antes de enviar.');
+  if (!currentParsed) {
+    showError('Selecione o arquivo de parâmetros antes de enviar.');
     return;
   }
 
@@ -631,7 +618,7 @@ async function submitJob() {
   btn.innerHTML = '<span style="animation:pulse 1s infinite">⏳</span> Enviando…';
 
   try {
-    const payload = { parampack: currentParsed, email, preset: selectedPreset };
+    const payload = { parampack: currentParsed, preset: selectedPreset };
     const res = await fetch(GA_ENDPOINT, {
       method : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -650,7 +637,7 @@ async function submitJob() {
       throw new Error(`Erro do servidor (status ${res.status})`);
     }
 
-    showStatusCard(email, data.job_id || '');
+    showStatusCard(data.job_id || '');
   } catch (err) {
     showError(`Erro ao enviar: ${err.message}`);
     btn.disabled = false;
@@ -658,7 +645,7 @@ async function submitJob() {
   }
 }
 
-function showStatusCard(email, jobId) {
+function showStatusCard(jobId) {
   currentJobId = jobId || null;
   document.getElementById('form-section').style.display = 'none';
   const card = document.getElementById('status-card');
@@ -670,7 +657,6 @@ function showStatusCard(email, jobId) {
   if (statusSubOriginalHTML === null) statusSubOriginalHTML = subEl.innerHTML;
   else subEl.innerHTML = statusSubOriginalHTML;
 
-  document.getElementById('status-email').textContent = email;
   if (jobId) {
     const sub = card.querySelector('.status-sub');
     if (sub) sub.insertAdjacentHTML('beforeend',
@@ -696,7 +682,6 @@ function resetForm() {
   document.getElementById('file-banner').style.display = 'none';
   document.getElementById('preview-grid').innerHTML = '';
   document.getElementById('file-input').value = '';
-  document.getElementById('email-input').value = '';
   document.getElementById('btn-execute').disabled = true;
   document.getElementById('btn-execute').innerHTML = '<span>🚀</span> Enviar para processamento';
   // Reset progress bar state
@@ -731,6 +716,7 @@ async function pollStatus(jobId) {
       clearInterval(pollingInterval);
       pollingInterval = null;
       if (data.status === 'done') showDoneUI(data);
+      else showFailedUI(data);
     }
   } catch (_) { /* silencioso — tenta de novo no próximo ciclo */ }
 }
@@ -775,28 +761,55 @@ function showDoneUI(data) {
   document.getElementById('progress-bar').style.background = '#27ae60';
   document.getElementById('progress-eta-label').textContent = 'Concluído!';
 
-  // O texto do card ainda é o de "calculando" — atualiza pro estado final,
-  // preservando o email e o código do job.
+  // O texto do card ainda é o de "calculando" — atualiza pro estado final.
   const sub = document.querySelector('#status-card .status-sub');
   if (sub) {
-    const emailTxt = (document.getElementById('status-email') || {}).textContent || '';
     sub.innerHTML =
-      'Sua grade ficou pronta.<br>' +
-      'Também enviamos por email para ' +
-      `<span class="status-email" id="status-email">${escHtml(emailTxt)}</span>` +
+      'Sua grade ficou pronta.<br>Baixe o arquivo abaixo.' +
       (currentJobId
         ? `<br><span style="font-size:11px;color:#8898b0;margin-top:4px;display:inline-block">Código: ${escHtml(currentJobId)}</span>`
         : '');
   }
 
-  // Download direto. Se o backend não conseguiu publicar o CSV (has_result
-  // false), o email com anexo continua sendo o caminho — não mostra o botão.
+  // Download direto. Se o backend não conseguiu publicar o CSV, has_result vem
+  // false e não há o que oferecer — o botão fica escondido.
   if (data.has_result && currentJobId) {
     const link = document.getElementById('download-link');
     link.href = `${GA_RESULT_ENDPOINT}?job_id=${encodeURIComponent(currentJobId)}`;
     if (data.csv_filename) link.setAttribute('download', data.csv_filename);
+    document.getElementById('download-hint').textContent =
+      'O link fica disponível por 7 dias. Guarde o código acima se quiser baixar depois.';
     document.getElementById('download-section').style.display = 'block';
   }
+}
+
+function showFailedUI(data) {
+  document.querySelector('#status-card .status-icon').textContent  = '❌';
+  document.querySelector('#status-card .status-title').textContent = 'Falha ao gerar a grade';
+
+  const dots = document.querySelectorAll('#status-card .step-dot');
+  dots[1].className = 'step-dot wait'; dots[1].textContent = '!';
+  dots[2].className = 'step-dot wait'; dots[2].textContent = '—';
+
+  // Barra vermelha deixa claro que parou por erro, não por conclusão
+  document.getElementById('progress-section').style.display = 'block';
+  document.getElementById('progress-bar').style.background = '#e74c3c';
+  document.getElementById('progress-eta-label').textContent = 'Interrompido';
+  document.getElementById('progress-gen-label').textContent = 'Execução interrompida';
+
+  const msg = (data && data.message) || 'O algoritmo falhou ao gerar a grade.';
+  const sub = document.querySelector('#status-card .status-sub');
+  if (sub) {
+    sub.innerHTML =
+      `${escHtml(msg)}<br>` +
+      'Entre em contato com o desenvolvedor informando o código abaixo.' +
+      (currentJobId
+        ? `<br><span style="font-size:11px;color:#8898b0;margin-top:4px;display:inline-block">Código: ${escHtml(currentJobId)}</span>`
+        : '');
+  }
+
+  // Não há CSV neste caminho
+  document.getElementById('download-section').style.display = 'none';
 }
 
 // ══════════════════════════════════════════
@@ -812,10 +825,6 @@ function selectPreset(key) {
 // ══════════════════════════════════════════
 // Utils
 // ══════════════════════════════════════════
-function isValidEmail(e) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
-
 function showError(msg) {
   const el = document.getElementById('error-banner');
   el.innerHTML = '<div class="error-title">⚠️ ' + escHtml(msg) + '</div>';
