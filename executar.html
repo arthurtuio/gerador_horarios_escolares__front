@@ -240,6 +240,52 @@
     .btn-execute:hover:not(:disabled) { background: #219a52; }
     .btn-execute:disabled { background: #a8d5b8; cursor: not-allowed; }
 
+    /* ── Login ── */
+    .login-card {
+      background: #fff;
+      border: 1px solid #dde3ed;
+      border-radius: 12px;
+      padding: 40px 28px;
+      text-align: center;
+      max-width: 420px;
+      margin: 40px auto;
+    }
+    .login-icon { font-size: 40px; margin-bottom: 12px; }
+    .login-title { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .login-sub { font-size: 13px; color: #6b7a99; margin-bottom: 22px; }
+    .btn-login {
+      width: 100%;
+      max-width: 320px;
+      margin-top: 14px;
+      background: #1a6fc4;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-login:hover:not(:disabled) { background: #155a9e; }
+    .btn-login:disabled { background: #9dc0e4; cursor: not-allowed; }
+    .login-error {
+      display: none;
+      color: #c62828;
+      font-size: 12.5px;
+      margin-top: 10px;
+    }
+    .login-error.show { display: block; }
+
+    .logout-link {
+      font-size: 11px;
+      color: #8898b0;
+      text-align: right;
+      margin-bottom: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .logout-link:hover { color: #c62828; }
+
     /* ── Status card ── */
     .status-card {
       background: #fff;
@@ -371,8 +417,29 @@
       Contacte o administrador do sistema.
     </div>
 
+    <!-- ── Login ── -->
+    <!-- A senha NÃO existe neste arquivo: é conferida no backend, que devolve
+         um token de sessão. Este repo é público, então nada de segredo aqui. -->
+    <div id="login-section" style="display:none">
+      <div class="login-card">
+        <div class="login-icon">🔒</div>
+        <h3 class="login-title">Acesso restrito</h3>
+        <p class="login-sub">Informe a senha para gerar grades de horários.</p>
+
+        <form id="login-form" autocomplete="on" onsubmit="return doLogin(event)">
+          <input type="password" id="password-input" class="text-input"
+                 placeholder="Senha" autocomplete="current-password"
+                 style="max-width:320px;margin:0 auto" />
+          <div id="login-error" class="login-error"></div>
+          <button type="submit" class="btn-login" id="btn-login">Entrar</button>
+        </form>
+      </div>
+    </div>
+
     <!-- ── Formulário de envio ── -->
-    <div id="form-section">
+    <div id="form-section" style="display:none">
+
+      <div class="logout-link" onclick="doLogout()">Sair</div>
 
       <p class="section-label">1. Arquivo de parâmetros da grade</p>
       <div class="upload-area" id="upload-area">
@@ -499,6 +566,13 @@ const GA_STATUS_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-get-s
 // Download direto do CSV. É um link de navegação (não fetch), então não passa por CORS.
 const GA_RESULT_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-get-result.modal.run';
 
+// Login: a senha é conferida no backend. Este arquivo é público (GitHub Pages),
+// então ele nunca conhece a senha — só guarda o token que o backend devolve.
+const GA_LOGIN_ENDPOINT  = 'https://arthur-henrique-2709--gerador-horarios-login.modal.run';
+const GA_LOGOUT_ENDPOINT = 'https://arthur-henrique-2709--gerador-horarios-logout.modal.run';
+
+const TOKEN_STORAGE_KEY = 'gh_session';
+
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
@@ -510,12 +584,110 @@ let currentJobId     = null;   // usado pra montar o link de download no fim
 let statusSubOriginalHTML = null;  // texto original do card, pra restaurar entre rodadas
 
 // ══════════════════════════════════════════
+// Auth
+// ══════════════════════════════════════════
+function getSession() {
+  try {
+    const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    // expires_at vem do backend em segundos (epoch)
+    if (!s.token || !s.expires_at || Date.now() / 1000 >= s.expires_at) {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      return null;
+    }
+    return s;
+  } catch (_) {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    return null;
+  }
+}
+
+function isLoggedIn() { return getSession() !== null; }
+
+function applyAuthState() {
+  const logged = isLoggedIn();
+  document.getElementById('login-section').style.display = logged ? 'none' : '';
+  document.getElementById('form-section').style.display  = logged ? '' : 'none';
+  if (!logged) {
+    document.getElementById('status-card').classList.remove('show');
+  }
+}
+
+async function doLogin(event) {
+  if (event) event.preventDefault();
+
+  const input = document.getElementById('password-input');
+  const btn   = document.getElementById('btn-login');
+  const err   = document.getElementById('login-error');
+  const pwd   = input.value;
+
+  err.classList.remove('show');
+
+  if (!pwd) {
+    err.textContent = 'Digite a senha.';
+    err.classList.add('show');
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Entrando…';
+
+  try {
+    const res  = await fetch(GA_LOGIN_ENDPOINT, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({ password: pwd }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (data.status === 'ok' && data.token) {
+      localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({
+        token: data.token,
+        expires_at: data.expires_at,
+      }));
+      input.value = '';          // não deixa a senha no DOM
+      applyAuthState();
+    } else {
+      err.textContent = (data.errors && data.errors[0]) || 'Não foi possível entrar.';
+      err.classList.add('show');
+      input.select();
+    }
+  } catch (e) {
+    err.textContent = `Erro de conexão: ${e.message}`;
+    err.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+  return false;
+}
+
+function doLogout() {
+  const s = getSession();
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+  if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+  // Melhor esforço: invalida o token no servidor também.
+  if (s) {
+    fetch(GA_LOGOUT_ENDPOINT, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({ token: s.token }),
+    }).catch(() => {});
+  }
+  applyAuthState();
+}
+
+// ══════════════════════════════════════════
 // Init
 // ══════════════════════════════════════════
 (function init() {
   if (!GA_ENDPOINT) {
     document.getElementById('config-notice').classList.add('show');
   }
+
+  // Decide entre tela de login e formulário
+  applyAuthState();
 
   // Drag & drop
   const area = document.getElementById('upload-area');
@@ -618,7 +790,12 @@ async function submitJob() {
   btn.innerHTML = '<span style="animation:pulse 1s infinite">⏳</span> Enviando…';
 
   try {
-    const payload = { parampack: currentParsed, preset: selectedPreset };
+    const session = getSession();
+    const payload = {
+      parampack: currentParsed,
+      preset   : selectedPreset,
+      token    : session ? session.token : '',
+    };
     const res = await fetch(GA_ENDPOINT, {
       method : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -626,6 +803,16 @@ async function submitJob() {
     });
 
     const data = await res.json().catch(() => ({}));
+
+    // Sessão expirada ou revogada no servidor: volta pro login.
+    if (data.status === 'unauthorized') {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      applyAuthState();
+      const err = document.getElementById('login-error');
+      err.textContent = (data.errors && data.errors[0]) || 'Sessão expirada. Entre novamente.';
+      err.classList.add('show');
+      return;
+    }
 
     if (!res.ok || data.status === 'error') {
       if (data.errors && data.errors.length) {
